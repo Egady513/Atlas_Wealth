@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Portfolio Monitor — Atlas Wealth</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#060609;color:#f9fafb;font-family:system-ui,-apple-system,sans-serif;min-height:100vh}
+  input{background:#111118;border:0.5px solid #1f2937;border-radius:8px;padding:10px 12px;font-size:14px;color:#f9fafb;width:100%;outline:none;transition:border-color 0.2s}
+  input:focus{border-color:#6366f1}
+  button{cursor:pointer;border:none;border-radius:8px;font-size:14px;font-weight:500;transition:opacity 0.2s}
+  button:disabled{opacity:0.4;cursor:not-allowed}
+  .screen{display:none;min-height:100vh}
+  .screen.active{display:flex;flex-direction:column}
+  .btn-primary{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;padding:12px 24px}
+  .btn-secondary{background:#0d0d1e;border:0.5px solid #312e81;color:#c4b5fd;padding:9px 16px}
+  .btn-danger{background:#1a0808;border:0.5px solid #7f1d1d;color:#fca5a5;padding:9px 16px}
+  .btn-success{background:#081a0e;border:0.5px solid #14532d;color:#86efac;padding:9px 16px}
+  .card{background:#0a0a12;border:0.5px solid #1f2937;border-radius:14px;padding:20px}
+  .label{font-size:11px;color:#4b5563;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:8px}
+  .tab-btn{padding:10px 16px;font-size:13px;background:transparent;color:#4b5563;border:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;transition:color 0.15s}
+  .tab-btn.active{color:#f9fafb;border-bottom-color:#6366f1}
+  .tab-content{display:none}
+  .tab-content.active{display:block}
+  .badge{display:inline-block;font-size:11px;padding:2px 9px;border-radius:99px;font-weight:600}
+  .badge-critical{background:#1a0808;color:#fca5a5;border:0.5px solid #7f1d1d}
+  .badge-warning{background:#1a1208;color:#fcd34d;border:0.5px solid #78350f}
+  .badge-info{background:#08101a;color:#93c5fd;border:0.5px solid #1e3a5f}
+  .badge-buy{background:#081a0e;color:#86efac;border:0.5px solid #14532d}
+  .badge-sell{background:#1a0808;color:#fca5a5;border:0.5px solid #7f1d1d}
+  .badge-trim{background:#1a1208;color:#fcd34d;border:0.5px solid #78350f}
+  .badge-hold{background:#111118;color:#9ca3af;border:0.5px solid #374151}
+  .notif{position:fixed;top:16px;right:16px;z-index:999;padding:12px 18px;border-radius:10px;font-size:13px;max-width:320px;opacity:0;transition:opacity 0.3s}
+  .notif.show{opacity:1}
+  .notif.success{background:#052e16;border:0.5px solid #166534;color:#86efac}
+  .notif.error{background:#1a0808;border:0.5px solid #7f1d1d;color:#fca5a5}
+  .notif.info{background:#0d0d1e;border:0.5px solid #312e81;color:#a5b4fc}
+  .progress-bar{height:6px;background:#1f2937;border-radius:99px;overflow:hidden;width:100%}
+  .progress-fill{height:100%;background:linear-gradient(90deg,#6366f1,#8b5cf6);border-radius:99px;transition:width 0.5s ease}
+  .metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));border-bottom:0.5px solid #111118}
+  .metric-cell{padding:12px 16px;border-right:0.5px solid #111118}
+  .metric-label{font-size:10px;color:#374151;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:3px}
+  .metric-val{font-size:18px;font-weight:600}
+  .action-row{display:flex;gap:10px;align-items:flex-start;padding:10px 14px;border-radius:10px;margin-bottom:8px}
+  .news-card{border-radius:12px;padding:14px 16px;margin-bottom:10px}
+  .buy-card{background:#081a0e;border:0.5px solid #14532d;border-radius:12px;padding:16px;margin-bottom:10px}
+  .rotation-card{background:#1a1208;border:0.5px solid #78350f;border-radius:10px;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .stress-card{background:#0a0a12;border:0.5px solid #1f2937;border-radius:12px;padding:16px;margin-bottom:10px}
+  .log-entry{background:#0a0a12;border:0.5px solid #111118;border-radius:10px;padding:12px 16px;margin-bottom:8px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{font-size:11px;color:#374151;text-transform:uppercase;letter-spacing:0.08em;padding:8px 12px;text-align:left;border-bottom:0.5px solid #111118;font-weight:500}
+  td{padding:10px 12px;border-bottom:0.5px solid #0d0d14;color:#d1d5db}
+  tr:hover td{background:#0a0a12}
+  .sector-bar{height:7px;background:#1f2937;border-radius:99px;overflow:hidden;margin-top:4px}
+  .drag-zone{border:2px dashed #1f2937;border-radius:16px;padding:52px 24px;cursor:pointer;text-align:center;transition:all 0.2s}
+  .drag-zone:hover,.drag-zone.dragover{border-color:#6366f1;background:rgba(99,102,241,0.06)}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .spinner{width:40px;height:40px;border:2px solid #1f2937;border-top-color:#6366f1;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto}
+  ::-webkit-scrollbar{width:4px;height:4px}
+  ::-webkit-scrollbar-track{background:#0a0a12}
+  ::-webkit-scrollbar-thumb{background:#1f2937;border-radius:2px}
+  @media(max-width:600px){.metric-grid{grid-template-columns:repeat(2,1fr)}.header-actions{flex-wrap:wrap}}
+</style>
+</head>
+<body>
+
+<!-- NOTIFICATION -->
+<div id="notif" class="notif"></div>
+
+<!-- ── SCREEN: SETUP ── -->
+<div id="screen-setup" class="screen active" style="align-items:center;justify-content:center;padding:32px 20px">
+  <div style="max-width:480px;width:100%">
+    <div style="text-align:center;margin-bottom:32px">
+      <div style="width:56px;height:56px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 16px">📊</div>
+      <h1 style="font-size:26px;font-weight:700;margin-bottom:8px">Atlas Wealth Monitor</h1>
+      <p style="font-size:14px;color:#6b7280;line-height:1.6">Enter your credentials below. Everything is stored locally in your browser — never sent anywhere except directly to Supabase and Telegram.</p>
+    </div>
+
+    <div class="card" style="margin-bottom:14px">
+      <div class="label" style="color:#6366f1;margin-bottom:14px">Supabase — Required</div>
+      <div style="margin-bottom:12px">
+        <div style="font-size:12px;color:#9ca3af;margin-bottom:6px">Project URL</div>
+        <input id="sb-url" type="text" placeholder="https://xxxx.supabase.co"/>
+      </div>
+      <div style="margin-bottom:12px">
+        <div style="font-size:12px;color:#9ca3af;margin-bottom:6px">Anon Key</div>
+        <input id="sb-key" type="password" placeholder="eyJhbGci..."/>
+      </div>
+      <div style="margin-bottom:12px">
+        <div style="font-size:12px;color:#9ca3af;margin-bottom:6px">Anthropic API Key</div>
+        <input id="anthropic-key" type="password" placeholder="sk-ant-..."/>
+        <div style="font-size:11px;color:#4b5563;margin-top:5px">Get yours free at <a href="https://console.anthropic.com" target="_blank" style="color:#6366f1">console.anthropic.com</a> → API Keys</div>
+      </div>
+      <div style="background:#0d0d1e;border:0.5px solid #312e81;border-radius:8px;padding:10px 12px;font-size:12px;color:#a5b4fc;line-height:1.6">
+        💡 Run this in Supabase SQL Editor first:<br>
+        <code style="font-size:11px;color:#c4b5fd">create table portfolio_store (key text primary key, value jsonb, updated_at timestamptz default now());</code>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:20px">
+      <div class="label" style="color:#22c55e;margin-bottom:14px">Telegram — Optional but recommended</div>
+      <div style="margin-bottom:12px">
+        <div style="font-size:12px;color:#9ca3af;margin-bottom:6px">Bot Token (from @BotFather)</div>
+        <input id="tg-token" type="password" placeholder="123456789:AAF..."/>
+      </div>
+      <div style="margin-bottom:12px">
+        <div style="font-size:12px;color:#9ca3af;margin-bottom:6px">Chat ID</div>
+        <div style="display:flex;gap:8px">
+          <input id="tg-chatid" type="text" placeholder="Will be auto-detected" style="flex:1"/>
+          <button class="btn-secondary" onclick="findChatId()" id="find-chatid-btn" style="white-space:nowrap;font-size:12px">Find mine</button>
+        </div>
+        <div style="font-size:11px;color:#4b5563;margin-top:5px">First send any message to your bot in Telegram, then click "Find mine"</div>
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="saveSetup()" style="width:100%;font-size:15px;padding:14px">Connect & Start →</button>
+  </div>
+</div>
+
+<!-- ── SCREEN: UPLOAD ── -->
+<div id="screen-upload" class="screen" style="align-items:center;justify-content:center;padding:40px 20px">
+  <div style="max-width:500px;width:100%;text-align:center">
+    <div style="width:52px;height:52px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 20px">📁</div>
+    <h2 style="font-size:24px;font-weight:700;margin-bottom:8px">Upload Your Portfolio</h2>
+    <p style="font-size:14px;color:#6b7280;line-height:1.7;margin-bottom:28px">Export from Chase → Investments → Positions → Download XLS. Your data saves to Supabase permanently.</p>
+    <div class="drag-zone" id="drag-zone" onclick="document.getElementById('file-input').click()" ondragover="onDragOver(event)" ondragleave="onDragLeave()" ondrop="onDrop(event)">
+      <div style="font-size:32px;margin-bottom:12px">📊</div>
+      <div style="font-size:15px;color:#e5e7eb;font-weight:500;margin-bottom:6px">Drop Chase XLS here</div>
+      <div style="font-size:13px;color:#4b5563">or click to browse</div>
+    </div>
+    <input type="file" id="file-input" accept=".xls,.xlsx" style="display:none" onchange="handleFile(this.files[0])"/>
+    <button onclick="showScreen('screen-setup')" style="margin-top:16px;background:transparent;border:none;font-size:12px;color:#374151;cursor:pointer">← Change credentials</button>
+  </div>
+</div>
+
+<!-- ── SCREEN: ANALYZING ── -->
+<div id="screen-analyzing" class="screen" style="align-items:center;justify-content:center">
+  <div style="text-align:center;max-width:360px;padding:40px 20px">
+    <div style="width:56px;height:56px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 20px">⚙️</div>
+    <h2 style="font-size:22px;font-weight:600;margin-bottom:8px">Running full analysis...</h2>
+    <p id="progress-text" style="font-size:14px;color:#6b7280;margin-bottom:28px">Starting...</p>
+    <div class="progress-bar" style="margin-bottom:10px"><div class="progress-fill" id="progress-fill" style="width:5%"></div></div>
+    <div id="progress-pct" style="font-size:12px;color:#4b5563">5%</div>
+  </div>
+</div>
+
+<!-- ── SCREEN: DASHBOARD ── -->
+<div id="screen-dashboard" class="screen">
+
+  <!-- Header -->
+  <div style="border-bottom:0.5px solid #111118;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;background:#07070c;position:sticky;top:0;z-index:10">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="width:32px;height:32px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px">📊</div>
+      <div>
+        <div style="font-size:14px;font-weight:600">Atlas Wealth Monitor</div>
+        <div id="header-meta" style="font-size:11px;color:#4b5563">Loading...</div>
+      </div>
+    </div>
+    <div class="header-actions" style="display:flex;gap:8px;flex-wrap:wrap">
+      <span id="critical-badge" style="display:none" class="badge badge-critical">0 critical</span>
+      <button class="btn-secondary" onclick="reAnalyze()" id="btn-analyze" style="font-size:12px">Re-analyze</button>
+      <button class="btn-secondary" onclick="runScan()" id="btn-scan" style="font-size:12px;color:#93c5fd;border-color:#1e3a5f">Market scan</button>
+      <button class="btn-primary" onclick="runFull()" id="btn-full" style="font-size:12px;padding:7px 16px">Full check</button>
+      <button onclick="document.getElementById('file-input2').click()" style="background:transparent;border:0.5px solid #1f2937;border-radius:8px;padding:7px 13px;font-size:12px;color:#6b7280">Update portfolio</button>
+    </div>
+  </div>
+  <input type="file" id="file-input2" accept=".xls,.xlsx" style="display:none" onchange="handleFile(this.files[0])"/>
+
+  <!-- Metrics strip -->
+  <div class="metric-grid" id="metrics-strip">
+    <div class="metric-cell"><div class="metric-label">Value</div><div class="metric-val" id="m-value">—</div></div>
+    <div class="metric-cell"><div class="metric-label">Total G/L</div><div class="metric-val" id="m-gl">—</div></div>
+    <div class="metric-cell"><div class="metric-label">G/L %</div><div class="metric-val" id="m-glpct">—</div></div>
+    <div class="metric-cell"><div class="metric-label">Tech %</div><div class="metric-val" id="m-tech">—</div></div>
+    <div class="metric-cell"><div class="metric-label">Buy Signals</div><div class="metric-val" id="m-buys" style="color:#22c55e">—</div></div>
+    <div class="metric-cell"><div class="metric-label">Critical Alerts</div><div class="metric-val" id="m-crit" style="color:#22c55e">0</div></div>
+  </div>
+
+  <!-- Tabs -->
+  <div style="display:flex;border-bottom:0.5px solid #111118;overflow-x:auto;background:#07070c">
+    <button class="tab-btn active" onclick="showTab('overview')">Overview</button>
+    <button class="tab-btn" onclick="showTab('market')" id="tab-market">Market Scan</button>
+    <button class="tab-btn" onclick="showTab('news')" id="tab-news">News</button>
+    <button class="tab-btn" onclick="showTab('alerts')" id="tab-alerts">Alerts</button>
+    <button class="tab-btn" onclick="showTab('actions')" id="tab-actions">Actions</button>
+    <button class="tab-btn" onclick="showTab('positions')">Positions</button>
+    <button class="tab-btn" onclick="showTab('stress')">Stress Tests</button>
+    <button class="tab-btn" onclick="showTab('log')">Check Log</button>
+    <button class="tab-btn" onclick="showTab('settings-tab')">Settings</button>
+  </div>
+
+  <!-- Tab contents -->
+  <div style="padding:20px;flex:1;overflow-y:auto">
+
+    <!-- OVERVIEW -->
+    <div class="tab-content active" id="tab-overview">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px">
+        <div class="card">
+          <div class="label">Portfolio health</div>
+          <div style="display:flex;gap:24px;align-items:center;margin-bottom:14px">
+            <div id="ring-current"></div>
+            <div id="ring-rebalance"></div>
+          </div>
+          <div id="strengths-weaknesses" style="font-size:13px;color:#6b7280;line-height:1.8"></div>
+        </div>
+        <div class="card">
+          <div class="label">Immediate actions</div>
+          <div id="urgent-actions"><p style="font-size:13px;color:#374151">Run analysis to populate.</p></div>
+        </div>
+        <div class="card">
+          <div class="label">Market pulse</div>
+          <div id="market-pulse"><p style="font-size:13px;color:#374151">Run market scan to populate.</p></div>
+        </div>
+        <div class="card" id="macro-card" style="display:none;grid-column:1/-1">
+          <div class="label">Analyst macro thesis</div>
+          <p id="macro-thesis" style="font-size:14px;color:#9ca3af;line-height:1.8"></p>
+        </div>
+        <div id="buy-opps-overview" style="display:none;background:#081a0e;border:0.5px solid #14532d;border-radius:14px;padding:20px;grid-column:1/-1">
+          <div class="label" style="color:#22c55e">New buy opportunities</div>
+          <div id="buy-opps-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:10px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MARKET SCAN -->
+    <div class="tab-content" id="tab-market-content">
+      <div id="market-empty" style="text-align:center;padding:48px 24px">
+        <div style="font-size:36px;margin-bottom:12px">🔭</div>
+        <p style="font-size:15px;color:#6b7280;margin-bottom:20px">No market scan run yet</p>
+        <button class="btn-primary" onclick="runScan()">Run market scan</button>
+      </div>
+      <div id="market-content" style="display:none">
+        <div id="rotation-section" style="margin-bottom:24px"></div>
+        <div id="sector-trends-section" style="margin-bottom:24px"></div>
+        <div id="buy-opps-section"></div>
+        <div id="scan-footer" style="font-size:11px;color:#374151;margin-top:16px"></div>
+      </div>
+    </div>
+
+    <!-- NEWS -->
+    <div class="tab-content" id="tab-news-content">
+      <div id="news-summary" style="background:#0a0a12;border:0.5px solid #1f2937;border-radius:10px;padding:14px 16px;margin-bottom:16px;font-size:14px;color:#9ca3af;line-height:1.7;display:none"></div>
+      <div id="news-list"><p style="font-size:13px;color:#374151">Run a market scan to see news.</p></div>
+    </div>
+
+    <!-- ALERTS -->
+    <div class="tab-content" id="tab-alerts-content">
+      <div class="label" style="margin-bottom:12px">Current session</div>
+      <div id="current-alerts"><p style="font-size:13px;color:#374151">Run an analysis to generate alerts.</p></div>
+      <div id="alerts-history-section" style="margin-top:24px;display:none">
+        <div class="label" style="margin-bottom:12px">History (saved in Supabase)</div>
+        <div id="alerts-history-list"></div>
+      </div>
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="tab-content" id="tab-actions-content">
+      <div id="actions-list"><p style="font-size:13px;color:#374151">Run an analysis to generate action items.</p></div>
+    </div>
+
+    <!-- POSITIONS -->
+    <div class="tab-content" id="tab-positions-content">
+      <div style="overflow-x:auto">
+        <table id="positions-table">
+          <thead><tr><th>Ticker</th><th>Description</th><th>Value</th><th>G/L $</th><th>G/L %</th><th>AI Verdict</th></tr></thead>
+          <tbody id="positions-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- STRESS TESTS -->
+    <div class="tab-content" id="tab-stress-content">
+      <div id="stress-list"><p style="font-size:13px;color:#374151">Run an analysis to generate stress tests.</p></div>
+    </div>
+
+    <!-- CHECK LOG -->
+    <div class="tab-content" id="tab-log-content">
+      <div class="label" id="log-label" style="margin-bottom:14px">No checks run yet</div>
+      <div id="log-list"></div>
+      <div class="card" style="margin-top:20px">
+        <div class="label" style="margin-bottom:12px">Recommended schedule</div>
+        <div style="display:flex;gap:12px;padding:10px 0;border-bottom:0.5px solid #111118"><span style="font-size:18px">📰</span><div><div style="font-size:13px;font-weight:500;color:#e5e7eb">Every morning — Market scan</div><div style="font-size:12px;color:#6b7280">Click "Market scan" — live web search for your holdings</div></div></div>
+        <div style="display:flex;gap:12px;padding:10px 0;border-bottom:0.5px solid #111118"><span style="font-size:18px">📊</span><div><div style="font-size:13px;font-weight:500;color:#e5e7eb">Every Monday — Full check</div><div style="font-size:12px;color:#6b7280">Upload fresh Chase XLS then click "Full check"</div></div></div>
+        <div style="display:flex;gap:12px;padding:10px 0"><span style="font-size:18px">⚡</span><div><div style="font-size:13px;font-weight:500;color:#e5e7eb">After earnings — Re-analyze</div><div style="font-size:12px;color:#6b7280">Any major position reports — click "Re-analyze"</div></div></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS TAB -->
+    <div class="tab-content" id="tab-settings-tab-content">
+      <div style="max-width:480px">
+        <div class="card" style="margin-bottom:14px">
+          <div class="label" style="color:#6366f1;margin-bottom:14px">Supabase</div>
+          <div style="margin-bottom:12px"><div style="font-size:12px;color:#9ca3af;margin-bottom:6px">Project URL</div><input id="s-sb-url" type="text" placeholder="https://xxxx.supabase.co"/></div>
+          <div style="margin-bottom:12px"><div style="font-size:12px;color:#9ca3af;margin-bottom:6px">Anon Key</div><input id="s-sb-key" type="password" placeholder="eyJhbGci..."/></div>
+          <div style="margin-bottom:4px"><div style="font-size:12px;color:#9ca3af;margin-bottom:6px">Anthropic API Key</div><input id="s-anthropic-key" type="password" placeholder="sk-ant-..."/><div style="font-size:11px;color:#4b5563;margin-top:5px">From <a href="https://console.anthropic.com" target="_blank" style="color:#6366f1">console.anthropic.com</a> → API Keys</div></div>
+        </div>
+        <div class="card" style="margin-bottom:14px">
+          <div class="label" style="color:#22c55e;margin-bottom:14px">Telegram</div>
+          <div style="margin-bottom:12px"><div style="font-size:12px;color:#9ca3af;margin-bottom:6px">Bot Token</div><input id="s-tg-token" type="password" placeholder="123456789:AAF..."/></div>
+          <div style="margin-bottom:12px">
+            <div style="font-size:12px;color:#9ca3af;margin-bottom:6px">Chat ID</div>
+            <div style="display:flex;gap:8px">
+              <input id="s-tg-chatid" type="text" placeholder="Auto-detect or enter manually" style="flex:1"/>
+              <button class="btn-secondary" onclick="findChatIdSettings()" style="white-space:nowrap;font-size:12px">Find mine</button>
+            </div>
+            <div style="font-size:11px;color:#4b5563;margin-top:5px">Send any message to your bot in Telegram first, then click "Find mine"</div>
+          </div>
+          <button class="btn-success" onclick="testTelegram()" style="font-size:12px;padding:8px 16px">Send test message</button>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn-primary" onclick="saveSettings()" style="flex:1">Save settings</button>
+          <button class="btn-danger" onclick="resetAll()">Reset all</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────────────────
+let CREDS = null;
+let STATE = { portfolio: null, analysis: null, scan: null, alertsHistory: [], checkLog: [] };
+
+const ANALYST_PERSONA = `You are a top-tier hedge fund portfolio strategist with 20+ years experience managing multi-billion dollar portfolios. You blend Ray Dalio macro awareness, Stanley Druckenmiller conviction investing, and Howard Marks risk discipline.
+
+INVESTMENT PHILOSOPHY: Concentration beats over-diversification. Risk management matters more than prediction. Asymmetric opportunities drive outsized returns. Capital preservation during downturns is critical. Markets move in regimes.
+
+ACCEPTANCE CRITERIA FOR THIS PORTFOLIO:
+- Beat S&P 500 by 3-5% annually
+- Minimize losses when market moves down — no huge swings on downturns
+
+CURRENT MACRO CONTEXT (March 2026): S&P 500 coiling between 6800-7000, potential Q2/Q3 volatility. Energy (XLE) #1 sector YTD — Iran conflict driving oil. Healthcare (LLY, XLV) outperforming — AI drug discovery + GLP-1. Utilities (CEG, VST) surging — AI data center power demand. Mag 7 lagging since Oct 2025. Gold in multi-year secular bull. Fed cuts priced September 2026. AI supercycle real plays: electricity, cybersecurity, ad tech, drug discovery, robotics. Stagflation risk from Iran + tariffs.
+
+RULES: No generic retail advice. No index-only suggestions. No avoiding difficult criticism. Always prioritize alpha, risk-adjusted returns, long-term compounding.`;
+
+const ANALYSIS_PROMPT = ANALYST_PERSONA + `\n\nAnalyze the portfolio. Return ONLY valid JSON, no markdown:\n{"score":<1-10>,"scoreAfterRebalance":<1-10>,"portfolioValue":<number>,"totalGainLoss":<number>,"totalGainLossPct":<number>,"techConcentration":<number>,"alerts":[{"level":"critical"|"warning"|"info","ticker":"<ticker>","title":"<short>","message":"<1-2 sentences>"}],"actionItems":[{"action":"SELL"|"BUY"|"TRIM"|"HOLD"|"ADD","ticker":"<ticker>","reason":"<concise>","urgency":"immediate"|"this-week"|"this-month"}],"sectorExposure":[{"sector":"<n>","pct":<number>,"status":"overweight"|"underweight"|"ok"}],"stressTests":[{"scenario":"<n>","currentImpact":"<e.g. -30% to -38%>","rebalancedImpact":"<e.g. -20%>"}],"strengths":["<s1>","<s2>","<s3>"],"weaknesses":["<w1>","<w2>","<w3>"],"topPositionAnalysis":[{"ticker":"<t>","verdict":"strong-hold"|"hold"|"trim"|"sell"|"add","note":"<one sentence>"}],"macroThesis":"<2-3 sentence market read for this portfolio>","telegramWorthy":<true|false>}`;
+
+const SCAN_PROMPT = ANALYST_PERSONA + `\n\nSearch the web for recent news and market data. Return ONLY valid JSON:\n{"marketSummary":"<2-3 sentences>","newsItems":[{"ticker":"<ticker or MARKET>","headline":"<actual headline>","summary":"<1-2 sentences>","impact":"bullish"|"bearish"|"neutral","severity":"critical"|"warning"|"info","recommendation":"<specific action>","telegramWorthy":<true|false>}],"sectorTrends":[{"sector":"<n>","trend":"up"|"down"|"sideways","note":"<one sentence>","action":"rotate-in"|"rotate-out"|"hold"}],"buyOpportunities":[{"ticker":"<ticker>","name":"<full name>","thesis":"<2-3 sentence buy thesis>","suggestedAllocation":"<% of portfolio>","urgency":"immediate"|"this-week"|"this-month","category":"<e.g. AI power, energy hedge>","telegramWorthy":<true|false>}],"rotationAlerts":[{"from":"<ticker>","to":"<ticker>","reason":"<why now>","telegramWorthy":<true|false>}],"topRisk":"<biggest risk>","topOpportunity":"<best opportunity>"}`;
+
+// ── SCREENS ────────────────────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ── TABS ───────────────────────────────────────────────────────────────────
+function showTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.getElementById('tab-' + name + '-content').classList.add('active');
+}
+
+// ── NOTIFICATIONS ──────────────────────────────────────────────────────────
+function showNotif(msg, type='info') {
+  const el = document.getElementById('notif');
+  el.textContent = msg; el.className = 'notif ' + type + ' show';
+  setTimeout(() => el.classList.remove('show'), 4000);
+}
+
+// ── PROGRESS ───────────────────────────────────────────────────────────────
+function setProgress(pct, text) {
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-pct').textContent = pct + '%';
+  document.getElementById('progress-text').textContent = text;
+}
+
+// ── SUPABASE ───────────────────────────────────────────────────────────────
+async function sbGet(key) {
+  try {
+    const r = await fetch(`${CREDS.sbUrl}/rest/v1/portfolio_store?key=eq.${encodeURIComponent(key)}&select=value`, {
+      headers: { apikey: CREDS.sbKey, Authorization: `Bearer ${CREDS.sbKey}` }
+    });
+    const d = await r.json();
+    return d?.[0]?.value ?? null;
+  } catch { return null; }
+}
+async function sbSet(key, value) {
+  try {
+    await fetch(`${CREDS.sbUrl}/rest/v1/portfolio_store`, {
+      method: 'POST',
+      headers: { apikey: CREDS.sbKey, Authorization: `Bearer ${CREDS.sbKey}`, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates' },
+      body: JSON.stringify({ key, value, updated_at: new Date().toISOString() })
+    });
+    return true;
+  } catch { return false; }
+}
+
+// ── TELEGRAM ───────────────────────────────────────────────────────────────
+async function tgSend(msg) {
+  if (!CREDS?.tgToken || !CREDS?.tgChatId) return;
+  try {
+    await fetch(`https://api.telegram.org/bot${CREDS.tgToken}/sendMessage`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: CREDS.tgChatId, text: msg, parse_mode: 'HTML' })
+    });
+  } catch {}
+}
+
+async function findChatId(inputId='tg-chatid', tokenId='tg-token') {
+  const token = document.getElementById(tokenId).value.trim();
+  if (!token) { showNotif('Enter your bot token first', 'error'); return; }
+  const btn = document.getElementById('find-chatid-btn');
+  if (btn) { btn.textContent = 'Finding...'; btn.disabled = true; }
+  try {
+    const r = await fetch(`https://api.telegram.org/bot${token}/getUpdates`);
+    const d = await r.json();
+    if (!d.ok) { showNotif('Invalid token — please check it', 'error'); return; }
+    const updates = d.result;
+    if (!updates?.length) { showNotif('No messages found. Send any message to your bot in Telegram first, then try again.', 'error'); return; }
+    const chatId = updates[updates.length-1].message?.chat?.id || updates[0].message?.chat?.id;
+    if (!chatId) { showNotif('Could not find Chat ID. Try sending another message to your bot.', 'error'); return; }
+    document.getElementById(inputId).value = chatId;
+    showNotif('Chat ID found: ' + chatId, 'success');
+  } catch(e) { showNotif('Failed to fetch: ' + e.message, 'error'); }
+  finally { if (btn) { btn.textContent = 'Find mine'; btn.disabled = false; } }
+}
+
+async function findChatIdSettings() {
+  await findChatId('s-tg-chatid', 's-tg-token');
+}
+
+async function testTelegram() {
+  const token = document.getElementById('s-tg-token').value.trim();
+  const chatId = document.getElementById('s-tg-chatid').value.trim();
+  if (!token || !chatId) { showNotif('Enter token and Chat ID first', 'error'); return; }
+  try {
+    const r = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text: '✅ <b>Atlas Wealth Monitor</b>\n\nTelegram is connected! You\'ll receive alerts for:\n• Critical news on your holdings\n• Rebalance opportunities\n• New buy candidates matching your strategy', parse_mode: 'HTML' })
+    });
+    const d = await r.json();
+    d.ok ? showNotif('Test message sent!', 'success') : showNotif('Failed: ' + d.description, 'error');
+  } catch(e) { showNotif('Error: ' + e.message, 'error'); }
+}
+
+// ── CLAUDE API ─────────────────────────────────────────────────────────────
+async function callClaude(system, user, webSearch=false) {
+  const body = { model: 'claude-sonnet-4-20250514', max_tokens: 4000, system, messages: [{ role: 'user', content: user }] };
+  if (webSearch) body.tools = [{ type: 'web_search_20250305', name: 'web_search' }];
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST', headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': CREDS.anthropicKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    }, body: JSON.stringify(body)
+  });
+  const d = await r.json();
+  const text = (d.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+  return JSON.parse(text.replace(/```json|```/g,'').trim());
+}
+
+// ── XLS PARSE ──────────────────────────────────────────────────────────────
+function parseXLS(file) {
+  return new Promise((res, rej) => {
+    const rd = new FileReader();
+    rd.onload = (e) => {
+      try {
+        const wb = XLSX.read(e.target.result, { type: 'binary' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const html = XLSX.utils.sheet_to_html(ws);
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const rows = doc.querySelectorAll('tr');
+        let headers = [];
+        const holdings = [];
+        rows.forEach((row, i) => {
+          const cells = Array.from(row.querySelectorAll('th,td')).map(c => c.textContent.trim());
+          if (i === 0) { headers = cells; return; }
+          if (cells.length < 5 || !cells[4]) return;
+          const obj = {}; headers.forEach((h, idx) => { obj[h] = cells[idx]||''; });
+          if (obj['Ticker']) holdings.push({
+            ticker: obj['Ticker'], description: obj['Description']||'',
+            value: obj['Value']||'', cost: obj['Cost']||'', quantity: obj['Quantity']||'',
+            unrealizedGL: obj['Unrealized G/L Amt.']||'', unrealizedGLPct: obj['Unrealized Gain/Loss (%)']||'',
+            assetClass: obj['Asset Class']||''
+          });
+        });
+        res(holdings.filter(h => h.ticker));
+      } catch(e) { rej(e); }
+    };
+    rd.onerror = rej; rd.readAsBinaryString(file);
+  });
+}
+
+// ── HELPERS ────────────────────────────────────────────────────────────────
+function fmtVal(n) { const v=parseFloat(String(n||0).replace(/[$,]/g,'')); return isNaN(v)?'—':'$'+Math.abs(v).toLocaleString(undefined,{maximumFractionDigits:0}); }
+function fmtPct(n) { const v=parseFloat(String(n||0).replace(/[%,]/g,'')); return isNaN(v)?'—':(v>=0?'+':'')+v.toFixed(1)+'%'; }
+function timeAgo(ts) { if(!ts)return'never'; const m=Math.floor((Date.now()-ts)/60000); if(m<1)return'just now'; if(m<60)return m+'m ago'; const h=Math.floor(m/60); if(h<24)return h+'h ago'; return Math.floor(h/24)+'d ago'; }
+function scoreColor(s) { return s>=7?'#22c55e':s>=5?'#f59e0b':'#ef4444'; }
+function scoreRing(score, label, size=80) {
+  const r=size/2-8, circ=2*Math.PI*r, offset=circ*(1-(score||0)/10), color=scoreColor(score||0);
+  return `<div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+    <svg width="${size}" height="${size}">
+      <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="#1f2937" stroke-width="6"/>
+      <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${color}" stroke-width="6" stroke-dasharray="${circ}" stroke-dashoffset="${offset}" stroke-linecap="round" transform="rotate(-90 ${size/2} ${size/2})"/>
+      <text x="${size/2}" y="${size/2+1}" text-anchor="middle" dominant-baseline="middle" font-size="${size>70?20:14}" font-weight="600" fill="${color}">${score||0}</text>
+      <text x="${size/2}" y="${size/2+(size>70?15:11)}" text-anchor="middle" font-size="9" fill="#4b5563">/10</text>
+    </svg>
+    <span style="font-size:11px;color:#6b7280;text-align:center">${label}</span>
+  </div>`;
+}
+const ACT_COLORS = { SELL:{bg:'#1a0808',text:'#fca5a5',border:'#7f1d1d',badge:'#dc2626'}, TRIM:{bg:'#1a1208',text:'#fcd34d',border:'#78350f',badge:'#d97706'}, BUY:{bg:'#081a0e',text:'#86efac',border:'#14532d',badge:'#16a34a'}, ADD:{bg:'#081a0e',text:'#86efac',border:'#14532d',badge:'#16a34a'}, HOLD:{bg:'#111118',text:'#9ca3af',border:'#374151',badge:'#4b5563'} };
+const ALERT_COLORS = { critical:{bg:'#1a0808',border:'#7f1d1d',text:'#fca5a5',dot:'#ef4444'}, warning:{bg:'#1a1208',border:'#78350f',text:'#fcd34d',dot:'#f59e0b'}, info:{bg:'#08101a',border:'#1e3a5f',text:'#93c5fd',dot:'#3b82f6'} };
+const VERDICT_COLORS = {'strong-hold':'#22c55e','hold':'#22c55e','add':'#60a5fa','trim':'#f59e0b','sell':'#ef4444'};
+
+// ── SETUP / SETTINGS ───────────────────────────────────────────────────────
+function saveSetup() {
+  const sbUrl = document.getElementById('sb-url').value.trim();
+  const sbKey = document.getElementById('sb-key').value.trim();
+  if (!sbUrl || !sbKey) { showNotif('Supabase URL and key are required', 'error'); return; }
+  const anthropicKey = document.getElementById('anthropic-key').value.trim();
+  if (!anthropicKey) { showNotif('Anthropic API key is required', 'error'); return; }
+  CREDS = { sbUrl, sbKey, anthropicKey, tgToken: document.getElementById('tg-token').value.trim(), tgChatId: document.getElementById('tg-chatid').value.trim() };
+  localStorage.setItem('atlas_creds', JSON.stringify(CREDS));
+  loadFromSupabase();
+}
+
+function saveSettings() {
+  CREDS = { sbUrl: document.getElementById('s-sb-url').value.trim(), sbKey: document.getElementById('s-sb-key').value.trim(), anthropicKey: document.getElementById('s-anthropic-key').value.trim(), tgToken: document.getElementById('s-tg-token').value.trim(), tgChatId: document.getElementById('s-tg-chatid').value.trim() };
+  localStorage.setItem('atlas_creds', JSON.stringify(CREDS));
+  showNotif('Settings saved', 'success');
+}
+
+function resetAll() {
+  if (!confirm('Reset all credentials and data?')) return;
+  localStorage.removeItem('atlas_creds');
+  location.reload();
+}
+
+async function loadFromSupabase() {
+  showScreen('screen-analyzing');
+  setProgress(5, 'Connecting to Supabase...');
+  try {
+    const [p, a, s, ah, cl] = await Promise.all([
+      sbGet('portfolio'), sbGet('last_analysis'), sbGet('last_scan'),
+      sbGet('alerts_history'), sbGet('check_log')
+    ]);
+    if (p) { STATE.portfolio = p; }
+    if (a) { STATE.analysis = a; }
+    if (s) { STATE.scan = s; }
+    if (ah) STATE.alertsHistory = ah;
+    if (cl) STATE.checkLog = cl;
+    setProgress(100, 'Done!');
+    setTimeout(() => {
+      if (STATE.portfolio) { renderDashboard(); showScreen('screen-dashboard'); }
+      else { showScreen('screen-upload'); }
+    }, 300);
+  } catch(e) {
+    showNotif('Supabase connection failed: ' + e.message, 'error');
+    showScreen('screen-upload');
+  }
+}
+
+// ── FILE HANDLING ──────────────────────────────────────────────────────────
+function onDragOver(e) { e.preventDefault(); document.getElementById('drag-zone').classList.add('dragover'); }
+function onDragLeave() { document.getElementById('drag-zone').classList.remove('dragover'); }
+function onDrop(e) { e.preventDefault(); onDragLeave(); handleFile(e.dataTransfer.files[0]); }
+
+async function handleFile(file) {
+  if (!file) return;
+  showScreen('screen-analyzing');
+  setProgress(5, 'Reading file...');
+  try {
+    const holdings = await parseXLS(file);
+    if (!holdings.length) throw new Error('No holdings found in file');
+    setProgress(15, 'Saving to Supabase...');
+    STATE.portfolio = { holdings, savedAt: Date.now(), filename: file.name };
+    await sbSet('portfolio', STATE.portfolio);
+    setProgress(30, 'Running portfolio analysis...');
+    await doAnalysis(holdings);
+    setProgress(70, 'Running market scan...');
+    await doScan(holdings);
+    setProgress(100, 'Complete!');
+    setTimeout(() => { renderDashboard(); showScreen('screen-dashboard'); }, 400);
+  } catch(e) { showNotif(e.message, 'error'); showScreen(STATE.portfolio ? 'screen-dashboard' : 'screen-upload'); }
+}
+
+// ── ANALYSIS ───────────────────────────────────────────────────────────────
+async function doAnalysis(holdings) {
+  const result = await callClaude(ANALYSIS_PROMPT, `Analyze this JP Morgan Chase portfolio. Date: ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}.\n\nHoldings:\n${JSON.stringify(holdings,null,2)}`);
+  result.timestamp = Date.now();
+  STATE.analysis = result;
+  await sbSet('last_analysis', result);
+
+  const newAlerts = (result.alerts||[]).filter(a=>a.level!=='info').map(a=>({...a,timestamp:Date.now(),id:Math.random().toString(36).slice(2)}));
+  if (newAlerts.length) {
+    STATE.alertsHistory = [...newAlerts, ...STATE.alertsHistory].slice(0, 60);
+    await sbSet('alerts_history', STATE.alertsHistory);
+  }
+
+  const entry = { timestamp: Date.now(), type: 'analysis', score: result.score, alertCount: newAlerts.length };
+  STATE.checkLog = [entry, ...STATE.checkLog].slice(0, 40);
+  await sbSet('check_log', STATE.checkLog);
+
+  if (result.telegramWorthy) {
+    const crits = (result.alerts||[]).filter(a=>a.level==='critical');
+    if (crits.length) {
+      const msg = `🔴 <b>PORTFOLIO ALERT</b>\n\nScore: ${result.score}/10\n\n` + crits.map(a=>`⚠️ <b>[${a.ticker}]</b> ${a.title}\n${a.message}`).join('\n\n') + `\n\n<i>Atlas Wealth Monitor · ${new Date().toLocaleTimeString()}</i>`;
+      await tgSend(msg);
+    }
+  }
+}
+
+async function doScan(holdings) {
+  const tickers = holdings.map(h=>h.ticker).join(', ');
+  const result = await callClaude(SCAN_PROMPT, `Search for current news and market data. Portfolio: ${tickers}\n\nHoldings:\n${JSON.stringify(holdings.map(h=>({ticker:h.ticker,value:h.value,unrealizedGLPct:h.unrealizedGLPct})),null,2)}\n\nScan for: news on these holdings, sector rotation opportunities, new buy candidates (energy/healthcare/utilities/AI-adjacent), macro/political/geopolitical updates.`, true);
+  result.timestamp = Date.now();
+  STATE.scan = result;
+  await sbSet('last_scan', result);
+
+  const entry = { timestamp: Date.now(), type: 'scan', alertCount: (result.newsItems||[]).filter(n=>n.severity==='critical').length, marketSummary: (result.marketSummary||'').substring(0,80) };
+  STATE.checkLog = [entry, ...STATE.checkLog].slice(0, 40);
+  await sbSet('check_log', STATE.checkLog);
+
+  const critNews = (result.newsItems||[]).filter(n=>n.telegramWorthy);
+  if (critNews.length) await tgSend(`🔴 <b>CRITICAL MARKET NEWS</b>\n\n` + critNews.map(n=>`📰 <b>[${n.ticker}]</b> ${n.headline}\n→ ${n.recommendation}`).join('\n\n') + `\n\n<i>Atlas Wealth Monitor · ${new Date().toLocaleTimeString()}</i>`);
+
+  const rotations = (result.rotationAlerts||[]).filter(r=>r.telegramWorthy);
+  if (rotations.length) await tgSend(`🔄 <b>REBALANCE OPPORTUNITY</b>\n\n` + rotations.map(r=>`🔄 <b>${r.from}</b> → <b>${r.to}</b>\n${r.reason}`).join('\n\n') + `\n\n<i>Atlas Wealth Monitor · ${new Date().toLocaleTimeString()}</i>`);
+
+  const buys = (result.buyOpportunities||[]).filter(b=>b.telegramWorthy);
+  if (buys.length) await tgSend(`📈 <b>NEW BUY OPPORTUNITY</b>\n\n` + buys.map(b=>`📈 <b>${b.ticker}</b> — ${b.name}\n${b.thesis}\nSuggested: ${b.suggestedAllocation}`).join('\n\n') + `\n\n<i>Atlas Wealth Monitor · ${new Date().toLocaleTimeString()}</i>`);
+}
+
+async function reAnalyze() {
+  if (!STATE.portfolio) return;
+  setBusy(true, 'analyze');
+  try { await doAnalysis(STATE.portfolio.holdings); renderDashboard(); showNotif('Analysis complete', 'success'); }
+  catch(e) { showNotif('Failed: ' + e.message, 'error'); }
+  setBusy(false, 'analyze');
+}
+
+async function runScan() {
+  if (!STATE.portfolio) return;
+  setBusy(true, 'scan');
+  try { await doScan(STATE.portfolio.holdings); renderDashboard(); showNotif('Scan complete', 'success'); }
+  catch(e) { showNotif('Failed: ' + e.message, 'error'); }
+  setBusy(false, 'scan');
+}
+
+async function runFull() {
+  if (!STATE.portfolio) return;
+  setBusy(true, 'full');
+  try { await doAnalysis(STATE.portfolio.holdings); await doScan(STATE.portfolio.holdings); renderDashboard(); showNotif('Full check complete', 'success'); }
+  catch(e) { showNotif('Failed: ' + e.message, 'error'); }
+  setBusy(false, 'full');
+}
+
+function setBusy(busy, type) {
+  document.getElementById('btn-analyze').disabled = busy;
+  document.getElementById('btn-scan').disabled = busy;
+  document.getElementById('btn-full').disabled = busy;
+  if (busy) {
+    const labels = { analyze: 'Analyzing...', scan: 'Scanning...', full: 'Running...' };
+    if (type==='analyze') document.getElementById('btn-analyze').textContent = labels[type];
+    if (type==='scan') document.getElementById('btn-scan').textContent = labels[type];
+    if (type==='full') document.getElementById('btn-full').textContent = labels[type];
+  } else {
+    document.getElementById('btn-analyze').textContent = 'Re-analyze';
+    document.getElementById('btn-scan').textContent = 'Market scan';
+    document.getElementById('btn-full').textContent = 'Full check';
+  }
+}
+
+// ── RENDER ─────────────────────────────────────────────────────────────────
+function renderDashboard() {
+  const a = STATE.analysis || {};
+  const s = STATE.scan || {};
+  const p = STATE.portfolio || {};
+  const critCount = [...(a.alerts||[]).filter(x=>x.level==='critical'), ...(s.newsItems||[]).filter(x=>x.severity==='critical')].length;
+  const buyOpps = s.buyOpportunities||[];
+
+  // Header meta
+  document.getElementById('header-meta').textContent = `${p.holdings?.length||0} positions · saved ${timeAgo(p.savedAt)} · analyzed ${timeAgo(a.timestamp)} · scanned ${timeAgo(s.timestamp)}`;
+
+  // Critical badge
+  const cb = document.getElementById('critical-badge');
+  if (critCount > 0) { cb.style.display='inline-block'; cb.textContent=critCount+' critical'; } else { cb.style.display='none'; }
+
+  // Metrics
+  const glNum = parseFloat(String(a.totalGainLoss||0).replace(/[$,]/g,''));
+  const glPct = parseFloat(String(a.totalGainLossPct||0).replace(/[%,]/g,''));
+  const techNum = parseFloat(String(a.techConcentration||0));
+  document.getElementById('m-value').textContent = fmtVal(a.portfolioValue);
+  document.getElementById('m-gl').style.color = glNum>=0?'#22c55e':'#ef4444';
+  document.getElementById('m-gl').textContent = (glNum>=0?'+':'') + fmtVal(Math.abs(glNum));
+  document.getElementById('m-glpct').style.color = glPct>=0?'#22c55e':'#ef4444';
+  document.getElementById('m-glpct').textContent = fmtPct(glPct);
+  document.getElementById('m-tech').style.color = techNum>50?'#ef4444':techNum>35?'#f59e0b':'#22c55e';
+  document.getElementById('m-tech').textContent = techNum.toFixed(0)+'%';
+  document.getElementById('m-buys').textContent = buyOpps.length||'0';
+  document.getElementById('m-crit').style.color = critCount>0?'#ef4444':'#22c55e';
+  document.getElementById('m-crit').textContent = critCount||'0';
+
+  // Tab labels
+  document.getElementById('tab-market').textContent = 'Market Scan' + (buyOpps.length?` (${buyOpps.length} buys)`:'');
+  document.getElementById('tab-news').textContent = 'News' + ((s.newsItems?.length)?` (${s.newsItems.length})`:'');
+  document.getElementById('tab-alerts').textContent = 'Alerts' + (critCount?` 🔴${critCount}`:'');
+  document.getElementById('tab-actions').textContent = 'Actions' + ((a.actionItems||[]).filter(x=>x.urgency==='immediate').length?` (${(a.actionItems||[]).filter(x=>x.urgency==='immediate').length})`:'');
+
+  // ── OVERVIEW ──
+  document.getElementById('ring-current').innerHTML = scoreRing(a.score||0,'Current',80);
+  document.getElementById('ring-rebalance').innerHTML = scoreRing(a.scoreAfterRebalance||0,'Post-rebalance',80);
+
+  let sw = '';
+  (a.strengths||[]).slice(0,2).forEach(s=>{ sw+=`<div><span style="color:#22c55e">✓</span> ${s}</div>`; });
+  (a.weaknesses||[]).slice(0,2).forEach(w=>{ sw+=`<div><span style="color:#ef4444">✕</span> ${w}</div>`; });
+  document.getElementById('strengths-weaknesses').innerHTML = sw;
+
+  const urgent = (a.actionItems||[]).filter(x=>x.urgency==='immediate');
+  document.getElementById('urgent-actions').innerHTML = urgent.length ? urgent.slice(0,4).map(item=>{
+    const c=ACT_COLORS[item.action]||ACT_COLORS.HOLD;
+    return `<div style="display:flex;gap:10px;margin-bottom:10px"><span style="background:${c.badge};color:white;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;flex-shrink:0;height:fit-content">${item.action}</span><div><div style="font-size:13px;font-weight:600;color:#e5e7eb">${item.ticker}</div><div style="font-size:12px;color:#6b7280">${item.reason}</div></div></div>`;
+  }).join('') : '<p style="font-size:13px;color:#374151">No urgent actions.</p>';
+
+  let pulse = '';
+  if (s.marketSummary) pulse += `<p style="font-size:13px;color:#9ca3af;line-height:1.7;margin-bottom:10px">${s.marketSummary}</p>`;
+  if (s.topRisk) pulse += `<div style="background:#1a0808;border:0.5px solid #7f1d1d;border-radius:8px;padding:9px 12px;font-size:12px;color:#fca5a5;margin-bottom:8px">⚠ ${s.topRisk}</div>`;
+  if (s.topOpportunity) pulse += `<div style="background:#081a0e;border:0.5px solid #14532d;border-radius:8px;padding:9px 12px;font-size:12px;color:#86efac">→ ${s.topOpportunity}</div>`;
+  if (!pulse) pulse = '<p style="font-size:13px;color:#374151">Run market scan to populate.</p>';
+  document.getElementById('market-pulse').innerHTML = pulse;
+
+  if (a.macroThesis) {
+    document.getElementById('macro-card').style.display='block';
+    document.getElementById('macro-thesis').textContent = a.macroThesis;
+  }
+
+  if (buyOpps.length) {
+    document.getElementById('buy-opps-overview').style.display='block';
+    document.getElementById('buy-opps-grid').innerHTML = buyOpps.slice(0,3).map(b=>`
+      <div style="background:#0a0a12;border:0.5px solid #14532d;border-radius:10px;padding:12px 14px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:15px;font-weight:700;color:#86efac">${b.ticker}</span><span style="font-size:11px;color:#4b5563">${b.suggestedAllocation}</span></div>
+        <div style="font-size:12px;color:#6b7280;margin-bottom:4px">${b.name}</div>
+        <div style="font-size:12px;color:#9ca3af;line-height:1.5">${(b.thesis||'').substring(0,100)}...</div>
+        <div style="font-size:10px;color:#22c55e;margin-top:6px;text-transform:uppercase">${b.category||''}</div>
+      </div>`).join('');
+  }
+
+  // ── MARKET SCAN ──
+  const hasScanData = s.buyOpportunities?.length || s.rotationAlerts?.length || s.newsItems?.length;
+  document.getElementById('market-empty').style.display = hasScanData?'none':'block';
+  document.getElementById('market-content').style.display = hasScanData?'block':'none';
+  if (hasScanData) {
+    const rots = s.rotationAlerts||[];
+    document.getElementById('rotation-section').innerHTML = rots.length ? `<div class="label" style="color:#f59e0b;margin-bottom:12px">Rotation Alerts</div>` + rots.map(r=>`<div class="rotation-card"><span style="background:#dc2626;color:white;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px">${r.from}</span><span style="color:#f59e0b;font-size:18px">→</span><span style="background:#16a34a;color:white;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px">${r.to}</span><span style="flex:1;font-size:13px;color:#9ca3af">${r.reason}</span>${r.telegramWorthy?'<span style="font-size:10px;color:#f59e0b">📱 Notified</span>':''}</div>`).join('') : '';
+
+    const trends = s.sectorTrends||[];
+    document.getElementById('sector-trends-section').innerHTML = trends.length ? `<div class="label" style="margin-bottom:10px">Sector Trends</div><div style="display:flex;gap:8px;flex-wrap:wrap">` + trends.map(t=>{
+      const tc=t.trend==='up'?'#22c55e':t.trend==='down'?'#ef4444':'#f59e0b';
+      const ac=t.action==='rotate-in'?'#081a0e':t.action==='rotate-out'?'#1a0808':'#0a0a12';
+      const ab=t.action==='rotate-in'?'#14532d':t.action==='rotate-out'?'#7f1d1d':'#1f2937';
+      return `<div style="background:${ac};border:0.5px solid ${ab};border-radius:8px;padding:8px 14px"><span style="color:${tc}">${t.trend==='up'?'↑':t.trend==='down'?'↓':'→'} </span><span style="color:#e5e7eb;font-weight:500;font-size:13px">${t.sector}</span><div style="font-size:11px;color:#6b7280;margin-top:3px">${t.note}</div></div>`;
+    }).join('') + '</div>' : '';
+
+    document.getElementById('buy-opps-section').innerHTML = buyOpps.length ? `<div class="label" style="color:#22c55e;margin-bottom:12px">${buyOpps.length} Buy Opportunit${buyOpps.length>1?'ies':'y'}</div>` + `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px">` + buyOpps.map(b=>`
+      <div class="buy-card">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;align-items:flex-start">
+          <div><div style="font-size:18px;font-weight:700;color:#86efac">${b.ticker}</div><div style="font-size:12px;color:#6b7280">${b.name}</div></div>
+          <div style="text-align:right"><div style="font-size:12px;color:#22c55e;font-weight:600">${b.suggestedAllocation}</div><div style="font-size:10px;color:#4b5563;text-transform:uppercase">${b.urgency}</div></div>
+        </div>
+        <p style="font-size:13px;color:#9ca3af;line-height:1.6;margin-bottom:10px">${b.thesis||''}</p>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:11px;background:#0a2010;color:#22c55e;padding:2px 8px;border-radius:4px">${b.category||''}</span>
+          ${b.telegramWorthy?'<span style="font-size:11px;color:#f59e0b">📱 Notified</span>':''}
+        </div>
+      </div>`).join('') + '</div>' : '';
+
+    document.getElementById('scan-footer').textContent = s.timestamp ? `Last scan: ${timeAgo(s.timestamp)} · Powered by live web search` : '';
+  }
+
+  // ── NEWS ──
+  if (s.marketSummary) { const ns=document.getElementById('news-summary'); ns.style.display='block'; ns.textContent=s.marketSummary; }
+  document.getElementById('news-list').innerHTML = (s.newsItems||[]).length ? (s.newsItems||[]).map(item=>{
+    const c=ALERT_COLORS[item.severity]||ALERT_COLORS.info;
+    const ic=item.impact==='bullish'?'#22c55e':item.impact==='bearish'?'#ef4444':'#f59e0b';
+    return `<div class="news-card" style="background:${c.bg};border:0.5px solid ${c.border}">
+      <div style="display:flex;gap:10px;align-items:flex-start">
+        <div style="width:8px;height:8px;border-radius:50%;background:${c.dot};margin-top:5px;flex-shrink:0"></div>
+        <div style="flex:1">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:6px">
+            <span style="font-size:11px;font-weight:700;color:${c.text};background:rgba(0,0,0,0.2);padding:2px 8px;border-radius:4px">${item.ticker}</span>
+            <div style="display:flex;gap:8px;align-items:center"><span style="font-size:11px;color:${ic};text-transform:uppercase">${item.impact}</span>${item.telegramWorthy?'<span style="font-size:10px;color:#f59e0b">📱</span>':''}</div>
+          </div>
+          <div style="font-size:14px;font-weight:500;color:#e5e7eb;margin-bottom:4px">${item.headline}</div>
+          <div style="font-size:13px;color:#9ca3af;line-height:1.6;margin-bottom:${item.recommendation?'8px':'0'}">${item.summary}</div>
+          ${item.recommendation?`<div style="font-size:12px;color:${ic};background:rgba(0,0,0,0.15);border-radius:6px;padding:6px 10px">→ ${item.recommendation}</div>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('') : '<p style="font-size:13px;color:#374151">Run a market scan to see news.</p>';
+
+  // ── ALERTS ──
+  document.getElementById('current-alerts').innerHTML = (a.alerts||[]).length ? (a.alerts||[]).map(alert=>{
+    const c=ALERT_COLORS[alert.level]||ALERT_COLORS.info;
+    return `<div style="background:${c.bg};border:0.5px solid ${c.border};border-radius:10px;padding:12px 14px;display:flex;gap:10px;margin-bottom:8px">
+      <div style="width:8px;height:8px;border-radius:50%;background:${c.dot};margin-top:5px;flex-shrink:0"></div>
+      <div style="flex:1"><div style="font-size:13px;font-weight:600;color:${c.text};margin-bottom:2px">${alert.ticker&&alert.ticker!=='PORTFOLIO'?`[${alert.ticker}] `:''}${alert.title}</div><div style="font-size:13px;color:#9ca3af;line-height:1.5">${alert.message}</div></div>
+      <div style="font-size:10px;color:${c.text};text-transform:uppercase;flex-shrink:0;opacity:0.7">${alert.level}</div>
+    </div>`;
+  }).join('') : '<p style="font-size:13px;color:#374151">Run an analysis to generate alerts.</p>';
+
+  if (STATE.alertsHistory.length) {
+    document.getElementById('alerts-history-section').style.display='block';
+    document.getElementById('alerts-history-list').innerHTML = STATE.alertsHistory.slice(0,20).map(alert=>`
+      <div style="background:#0a0a12;border:0.5px solid #111118;border-radius:8px;padding:10px 14px;display:flex;gap:10px;align-items:center;margin-bottom:6px">
+        <div style="width:6px;height:6px;border-radius:50%;background:${alert.level==='critical'?'#ef4444':'#f59e0b'};flex-shrink:0"></div>
+        <div style="flex:1;font-size:12px;color:#6b7280">${alert.ticker&&alert.ticker!=='PORTFOLIO'?`[${alert.ticker}] `:''}${alert.title}</div>
+        <div style="font-size:11px;color:#374151">${timeAgo(alert.timestamp)}</div>
+      </div>`).join('');
+  }
+
+  // ── ACTIONS ──
+  const urgGroups = { immediate:'⚡ Immediate', 'this-week':'This week', 'this-month':'This month' };
+  let actHtml = '';
+  Object.entries(urgGroups).forEach(([urg, label]) => {
+    const items = (a.actionItems||[]).filter(x=>x.urgency===urg);
+    if (!items.length) return;
+    actHtml += `<div style="margin-bottom:24px"><div class="label" style="margin-bottom:10px">${label}</div>` + items.map(item=>{
+      const c=ACT_COLORS[item.action]||ACT_COLORS.HOLD;
+      return `<div style="background:${c.bg};border:0.5px solid ${c.border};border-radius:10px;padding:12px 16px;display:flex;gap:12px;align-items:flex-start;margin-bottom:8px">
+        <span style="background:${c.badge};color:white;font-size:11px;font-weight:700;padding:3px 10px;border-radius:5px;flex-shrink:0">${item.action}</span>
+        <div><div style="font-size:14px;font-weight:600;color:#e5e7eb;margin-bottom:2px">${item.ticker}</div><div style="font-size:13px;color:#6b7280">${item.reason}</div></div>
+      </div>`;
+    }).join('') + '</div>';
+  });
+  document.getElementById('actions-list').innerHTML = actHtml || '<p style="font-size:13px;color:#374151">No action items. Run an analysis to generate.</p>';
+
+  // ── POSITIONS ──
+  const pa = a.topPositionAnalysis||[];
+  document.getElementById('positions-tbody').innerHTML = (p.holdings||[]).map(h=>{
+    const gl=parseFloat((h.unrealizedGL||'0').replace(/[$,]/g,''));
+    const glp=parseFloat((h.unrealizedGLPct||'0').replace(/%/g,''));
+    const pos=pa.find(x=>x.ticker===h.ticker);
+    const glColor=gl>=0?'#22c55e':'#ef4444';
+    return `<tr>
+      <td style="font-weight:600;color:#f9fafb">${h.ticker}</td>
+      <td style="color:#6b7280;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(h.description||'').substring(0,28)}</td>
+      <td>${h.value?'$'+parseFloat(h.value.replace(/[$,]/g,'')).toLocaleString():'—'}</td>
+      <td style="color:${glColor}">${gl>=0?'+':''}$${Math.abs(gl).toLocaleString()}</td>
+      <td style="color:${glColor}">${glp>=0?'+':''}${glp.toFixed(1)}%</td>
+      <td>${pos?`<span style="font-size:11px;font-weight:700;color:${VERDICT_COLORS[pos.verdict]||'#9ca3af'};text-transform:uppercase">${pos.verdict}</span><div style="font-size:11px;color:#4b5563;margin-top:2px">${pos.note||''}</div>`:'<span style="color:#1f2937">—</span>'}</td>
+    </tr>`;
+  }).join('');
+
+  // ── STRESS TESTS ──
+  document.getElementById('stress-list').innerHTML = (a.stressTests||[]).length ? (a.stressTests||[]).map(st=>`
+    <div class="stress-card">
+      <div style="font-size:13px;font-weight:600;color:#e5e7eb;margin-bottom:12px">${st.scenario}</div>
+      <div style="background:#1a0808;border-radius:8px;padding:8px 12px;margin-bottom:8px"><div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px">Current</div><div style="font-size:15px;font-weight:600;color:#ef4444">${st.currentImpact}</div></div>
+      <div style="background:#081a0e;border-radius:8px;padding:8px 12px"><div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px">Post-rebalance</div><div style="font-size:15px;font-weight:600;color:#22c55e">${st.rebalancedImpact}</div></div>
+    </div>`).join('') : '<p style="font-size:13px;color:#374151">Run an analysis to generate stress tests.</p>';
+
+  // ── CHECK LOG ──
+  document.getElementById('log-label').textContent = `Check history (${STATE.checkLog.length} entries · stored in Supabase)`;
+  document.getElementById('log-list').innerHTML = STATE.checkLog.map(entry=>`
+    <div class="log-entry">
+      <div style="width:36px;height:36px;border-radius:8px;background:${entry.type==='scan'?'#0d1829':'#0d0a1f'};display:flex;align-items:center;justify-content:center;font-size:18px">${entry.type==='scan'?'📰':'📊'}</div>
+      <div style="flex:1"><div style="font-size:13px;font-weight:500;color:#e5e7eb">${entry.type==='scan'?'Market scan':'Portfolio analysis'}</div><div style="font-size:12px;color:#6b7280">${entry.score?`Score: ${entry.score}/10 · `:''}${entry.alertCount||0} alert${entry.alertCount!==1?'s':''}${entry.marketSummary?' · '+entry.marketSummary+'...':''}</div></div>
+      <div style="font-size:12px;color:#374151">${timeAgo(entry.timestamp)}</div>
+    </div>`).join('') || '<p style="font-size:13px;color:#374151">No checks run yet.</p>';
+
+  // ── SETTINGS TAB (pre-fill) ──
+  if (CREDS) {
+    document.getElementById('s-sb-url').value = CREDS.sbUrl||'';
+    document.getElementById('s-sb-key').value = CREDS.sbKey||'';
+    document.getElementById('s-anthropic-key').value = CREDS.anthropicKey||'';
+    document.getElementById('s-tg-token').value = CREDS.tgToken||'';
+    document.getElementById('s-tg-chatid').value = CREDS.tgChatId||'';
+  }
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────────
+(function init() {
+  const saved = localStorage.getItem('atlas_creds');
+  if (saved) {
+    CREDS = JSON.parse(saved);
+    // If old saved creds missing anthropic key, show setup again
+    if (!CREDS.anthropicKey) {
+      showScreen('screen-setup');
+    } else {
+      loadFromSupabase();
+    }
+  } else {
+    showScreen('screen-setup');
+  }
+})();
+</script>
+</body>
+</html>
