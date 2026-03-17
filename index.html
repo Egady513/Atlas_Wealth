@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Portfolio Monitor â Atlas Wealth</title>
+<title>Portfolio Monitor Ã¢ÂÂ Atlas Wealth</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
@@ -69,17 +69,17 @@
 <!-- NOTIFICATION -->
 <div id="notif" class="notif"></div>
 
-<!-- ââ SCREEN: SETUP ââ -->
+<!-- Ã¢ÂÂÃ¢ÂÂ SCREEN: SETUP Ã¢ÂÂÃ¢ÂÂ -->
 <div id="screen-setup" class="screen active" style="align-items:center;justify-content:center;padding:32px 20px">
   <div style="max-width:480px;width:100%">
     <div style="text-align:center;margin-bottom:32px">
-      <div style="width:56px;height:56px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 16px">ð</div>
+      <div style="width:56px;height:56px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 16px">Ã°ÂÂÂ</div>
       <h1 style="font-size:26px;font-weight:700;margin-bottom:8px">Atlas Wealth Monitor</h1>
-      <p style="font-size:14px;color:#6b7280;line-height:1.6">Enter your credentials below. Everything is stored locally in your browser â never sent anywhere except directly to Supabase and Telegram.</p>
+      <p style="font-size:14px;color:#6b7280;line-height:1.6">Enter your credentials below. Everything is stored locally in your browser Ã¢ÂÂ never sent anywhere except directly to Supabase and Telegram.</p>
     </div>
 
     <div class="card" style="margin-bottom:14px">
-      <div class="label" style="color:#6366f1;margin-bottom:14px">Supabase â Required</div>
+      <div class="label" style="color:#6366f1;margin-bottom:14px">Supabase Ã¢ÂÂ Required</div>
       <div style="margin-bottom:12px">
         <div style="font-size:12px;color:#9ca3af;margin-bottom:6px">Project URL</div>
         <input id="sb-url" type="text" placeholder="https://xxxx.supabase.co"/>
@@ -91,16 +91,16 @@
       <div style="margin-bottom:12px">
         <div style="font-size:12px;color:#9ca3af;margin-bottom:6px">Anthropic API Key</div>
         <input id="anthropic-key" type="password" placeholder="sk-ant-..."/>
-        <div style="font-size:11px;color:#4b5563;margin-top:5px">Get yours free at <a href="https://console.anthropic.com" target="_blank" style="color:#6366f1">console.anthropic.com</a> â API Keys</div>
+        <div style="font-size:11px;color:#4b5563;margin-top:5px">Get yours free at <a href="https://console.anthropic.com" target="_blank" style="color:#6366f1">console.anthropic.com</a> Ã¢ÂÂ API Keys</div>
       </div>
       <div style="background:#0d0d1e;border:0.5px solid #312e81;border-radius:8px;padding:10px 12px;font-size:12px;color:#a5b4fc;line-height:1.6">
-        ð¡ Run this in Supabase SQL Editor first:<br>
+        Ã°ÂÂÂ¡ Run this in Supabase SQL Editor first:<br>
         <code style="font-size:11px;color:#c4b5fd">create table portfolio_store (key text primary key, value jsonb, updated_at timestamptz default now());</code>
       </div>
     </div>
 
     <div class="card" style="margin-bottom:20px">
-      <div class="label" style="color:#22c55e;margin-bottom:14px">Telegram â Optional but recommended</div>
+      <div class="label" style="color:#22c55e;margin-bottom:14px">Telegram Ã¢ÂÂ Optional but recommended</div>
       <div style="margin-bottom:12px">
         <div style="font-size:12px;color:#9ca3af;margin-bottom:6px">Bot Token (from @BotFather)</div>
         <input id="tg-token" type="password" placeholder="123456789:AAF..."/>
@@ -115,30 +115,30 @@
       </div>
     </div>
 
-    <button class="btn-primary" onclick="saveSetup()" style="width:100%;font-size:15px;padding:14px">Connect & Start â</button>
+    <button class="btn-primary" onclick="saveSetup()" style="width:100%;font-size:15px;padding:14px">Connect & Start Ã¢ÂÂ</button>
   </div>
 </div>
 
-<!-- ââ SCREEN: UPLOAD ââ -->
+<!-- Ã¢ÂÂÃ¢ÂÂ SCREEN: UPLOAD Ã¢ÂÂÃ¢ÂÂ -->
 <div id="screen-upload" class="screen" style="align-items:center;justify-content:center;padding:40px 20px">
   <div style="max-width:500px;width:100%;text-align:center">
-    <div style="width:52px;height:52px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 20px">ð</div>
+    <div style="width:52px;height:52px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 20px">Ã°ÂÂÂ</div>
     <h2 style="font-size:24px;font-weight:700;margin-bottom:8px">Upload Your Portfolio</h2>
-    <p style="font-size:14px;color:#6b7280;line-height:1.7;margin-bottom:28px">Export from Chase â Investments â Positions â Download XLS. Your data saves to Supabase permanently.</p>
+    <p style="font-size:14px;color:#6b7280;line-height:1.7;margin-bottom:28px">Export from Chase Ã¢ÂÂ Investments Ã¢ÂÂ Positions Ã¢ÂÂ Download XLS. Your data saves to Supabase permanently.</p>
     <div class="drag-zone" id="drag-zone" onclick="document.getElementById('file-input').click()" ondragover="onDragOver(event)" ondragleave="onDragLeave()" ondrop="onDrop(event)">
-      <div style="font-size:32px;margin-bottom:12px">ð</div>
+      <div style="font-size:32px;margin-bottom:12px">Ã°ÂÂÂ</div>
       <div style="font-size:15px;color:#e5e7eb;font-weight:500;margin-bottom:6px">Drop Chase XLS here</div>
       <div style="font-size:13px;color:#4b5563">or click to browse</div>
     </div>
     <input type="file" id="file-input" accept=".xls,.xlsx" style="display:none" onchange="handleFile(this.files[0])"/>
-    <button onclick="showScreen('screen-setup')" style="margin-top:16px;background:transparent;border:none;font-size:12px;color:#374151;cursor:pointer">â Change credentials</button>
+    <button onclick="showScreen('screen-setup')" style="margin-top:16px;background:transparent;border:none;font-size:12px;color:#374151;cursor:pointer">Ã¢ÂÂ Change credentials</button>
   </div>
 </div>
 
-<!-- ââ SCREEN: ANALYZING ââ -->
+<!-- Ã¢ÂÂÃ¢ÂÂ SCREEN: ANALYZING Ã¢ÂÂÃ¢ÂÂ -->
 <div id="screen-analyzing" class="screen" style="align-items:center;justify-content:center">
   <div style="text-align:center;max-width:360px;padding:40px 20px">
-    <div style="width:56px;height:56px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 20px">âï¸</div>
+    <div style="width:56px;height:56px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 20px">Ã¢ÂÂÃ¯Â¸Â</div>
     <h2 style="font-size:22px;font-weight:600;margin-bottom:8px">Running full analysis...</h2>
     <p id="progress-text" style="font-size:14px;color:#6b7280;margin-bottom:28px">Starting...</p>
     <div class="progress-bar" style="margin-bottom:10px"><div class="progress-fill" id="progress-fill" style="width:5%"></div></div>
@@ -146,13 +146,13 @@
   </div>
 </div>
 
-<!-- ââ SCREEN: DASHBOARD ââ -->
+<!-- Ã¢ÂÂÃ¢ÂÂ SCREEN: DASHBOARD Ã¢ÂÂÃ¢ÂÂ -->
 <div id="screen-dashboard" class="screen">
 
   <!-- Header -->
   <div style="border-bottom:0.5px solid #111118;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;background:#07070c;position:sticky;top:0;z-index:10">
     <div style="display:flex;align-items:center;gap:12px">
-      <div style="width:32px;height:32px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px">ð</div>
+      <div style="width:32px;height:32px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px">Ã°ÂÂÂ</div>
       <div>
         <div style="font-size:14px;font-weight:600">Atlas Wealth Monitor</div>
         <div id="header-meta" style="font-size:11px;color:#4b5563">Loading...</div>
@@ -162,7 +162,7 @@
       <span id="critical-badge" style="display:none" class="badge badge-critical">0 critical</span>
       <button class="btn-secondary" onclick="reAnalyze()" id="btn-analyze" style="font-size:12px">Re-analyze</button>
       <button class="btn-secondary" onclick="runScan()" id="btn-scan" style="font-size:12px;color:#93c5fd;border-color:#1e3a5f">Market scan</button>
-      <button class="btn-primary" onclick="runFull()" id="btn-full" style="font-size:12px;padding:7px 16px" title="Runs both portfolio analysis + live market scan together">Full check ⚡</button>
+      <button class="btn-primary" onclick="runFull()" id="btn-full" style="font-size:12px;padding:7px 16px" title="Runs both portfolio analysis + live market scan together">Full check â¡</button>
       <button onclick="document.getElementById('file-input2').click()" style="background:transparent;border:0.5px solid #1f2937;border-radius:8px;padding:7px 13px;font-size:12px;color:#6b7280">Update portfolio</button>
     </div>
   </div>
@@ -170,11 +170,11 @@
 
   <!-- Metrics strip -->
   <div class="metric-grid" id="metrics-strip">
-    <div class="metric-cell"><div class="metric-label">Value</div><div class="metric-val" id="m-value">â</div></div>
-    <div class="metric-cell"><div class="metric-label">Total G/L</div><div class="metric-val" id="m-gl">â</div></div>
-    <div class="metric-cell"><div class="metric-label">G/L %</div><div class="metric-val" id="m-glpct">â</div></div>
-    <div class="metric-cell"><div class="metric-label">Tech %</div><div class="metric-val" id="m-tech">â</div></div>
-    <div class="metric-cell"><div class="metric-label">Buy Signals</div><div class="metric-val" id="m-buys" style="color:#22c55e">â</div></div>
+    <div class="metric-cell"><div class="metric-label">Value</div><div class="metric-val" id="m-value">Ã¢ÂÂ</div></div>
+    <div class="metric-cell"><div class="metric-label">Total G/L</div><div class="metric-val" id="m-gl">Ã¢ÂÂ</div></div>
+    <div class="metric-cell"><div class="metric-label">G/L %</div><div class="metric-val" id="m-glpct">Ã¢ÂÂ</div></div>
+    <div class="metric-cell"><div class="metric-label">Tech %</div><div class="metric-val" id="m-tech">Ã¢ÂÂ</div></div>
+    <div class="metric-cell"><div class="metric-label">Buy Signals</div><div class="metric-val" id="m-buys" style="color:#22c55e">Ã¢ÂÂ</div></div>
     <div class="metric-cell"><div class="metric-label">Critical Alerts</div><div class="metric-val" id="m-crit" style="color:#22c55e">0</div></div>
   </div>
 
@@ -227,7 +227,7 @@
     <!-- MARKET SCAN -->
     <div class="tab-content" id="tab-market-content">
       <div id="market-empty" style="text-align:center;padding:48px 24px">
-        <div style="font-size:36px;margin-bottom:12px">ð­</div>
+        <div style="font-size:36px;margin-bottom:12px">Ã°ÂÂÂ­</div>
         <p style="font-size:15px;color:#6b7280;margin-bottom:20px">No market scan run yet</p>
         <button class="btn-primary" onclick="runScan()">Run market scan</button>
       </div>
@@ -281,9 +281,9 @@
       <div id="log-list"></div>
       <div class="card" style="margin-top:20px">
         <div class="label" style="margin-bottom:12px">Recommended schedule</div>
-        <div style="display:flex;gap:12px;padding:10px 0;border-bottom:0.5px solid #111118"><span style="font-size:18px">ð°</span><div><div style="font-size:13px;font-weight:500;color:#e5e7eb">Every morning â Market scan</div><div style="font-size:12px;color:#6b7280">Click "Market scan" â live web search for your holdings</div></div></div>
-        <div style="display:flex;gap:12px;padding:10px 0;border-bottom:0.5px solid #111118"><span style="font-size:18px">ð</span><div><div style="font-size:13px;font-weight:500;color:#e5e7eb">Every Monday â Full check</div><div style="font-size:12px;color:#6b7280">Upload fresh Chase XLS then click "Full check"</div></div></div>
-        <div style="display:flex;gap:12px;padding:10px 0"><span style="font-size:18px">â¡</span><div><div style="font-size:13px;font-weight:500;color:#e5e7eb">After earnings â Re-analyze</div><div style="font-size:12px;color:#6b7280">Any major position reports â click "Re-analyze"</div></div></div>
+        <div style="display:flex;gap:12px;padding:10px 0;border-bottom:0.5px solid #111118"><span style="font-size:18px">Ã°ÂÂÂ°</span><div><div style="font-size:13px;font-weight:500;color:#e5e7eb">Every morning Ã¢ÂÂ Market scan</div><div style="font-size:12px;color:#6b7280">Click "Market scan" Ã¢ÂÂ live web search for your holdings</div></div></div>
+        <div style="display:flex;gap:12px;padding:10px 0;border-bottom:0.5px solid #111118"><span style="font-size:18px">Ã°ÂÂÂ</span><div><div style="font-size:13px;font-weight:500;color:#e5e7eb">Every Monday Ã¢ÂÂ Full check</div><div style="font-size:12px;color:#6b7280">Upload fresh Chase XLS then click "Full check"</div></div></div>
+        <div style="display:flex;gap:12px;padding:10px 0"><span style="font-size:18px">Ã¢ÂÂ¡</span><div><div style="font-size:13px;font-weight:500;color:#e5e7eb">After earnings Ã¢ÂÂ Re-analyze</div><div style="font-size:12px;color:#6b7280">Any major position reports Ã¢ÂÂ click "Re-analyze"</div></div></div>
       </div>
     </div>
 
@@ -294,7 +294,7 @@
           <div class="label" style="color:#6366f1;margin-bottom:14px">Supabase</div>
           <div style="margin-bottom:12px"><div style="font-size:12px;color:#9ca3af;margin-bottom:6px">Project URL</div><input id="s-sb-url" type="text" placeholder="https://xxxx.supabase.co"/></div>
           <div style="margin-bottom:12px"><div style="font-size:12px;color:#9ca3af;margin-bottom:6px">Anon Key</div><input id="s-sb-key" type="password" placeholder="eyJhbGci..."/></div>
-          <div style="margin-bottom:4px"><div style="font-size:12px;color:#9ca3af;margin-bottom:6px">Anthropic API Key</div><input id="s-anthropic-key" type="password" placeholder="sk-ant-..."/><div style="font-size:11px;color:#4b5563;margin-top:5px">From <a href="https://console.anthropic.com" target="_blank" style="color:#6366f1">console.anthropic.com</a> â API Keys</div></div>
+          <div style="margin-bottom:4px"><div style="font-size:12px;color:#9ca3af;margin-bottom:6px">Anthropic API Key</div><input id="s-anthropic-key" type="password" placeholder="sk-ant-..."/><div style="font-size:11px;color:#4b5563;margin-top:5px">From <a href="https://console.anthropic.com" target="_blank" style="color:#6366f1">console.anthropic.com</a> Ã¢ÂÂ API Keys</div></div>
         </div>
         <div class="card" style="margin-bottom:14px">
           <div class="label" style="color:#22c55e;margin-bottom:14px">Telegram</div>
@@ -320,7 +320,7 @@
 </div>
 
 <script>
-// ââ STATE ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂ STATE Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 let CREDS = null;
 let STATE = { portfolio: null, analysis: null, scan: null, alertsHistory: [], checkLog: [] };
 
@@ -330,9 +330,9 @@ INVESTMENT PHILOSOPHY: Concentration beats over-diversification. Risk management
 
 ACCEPTANCE CRITERIA FOR THIS PORTFOLIO:
 - Beat S&P 500 by 3-5% annually
-- Minimize losses when market moves down â no huge swings on downturns
+- Minimize losses when market moves down Ã¢ÂÂ no huge swings on downturns
 
-CURRENT MACRO CONTEXT (March 2026): S&P 500 coiling between 6800-7000, potential Q2/Q3 volatility. Energy (XLE) #1 sector YTD â Iran conflict driving oil. Healthcare (LLY, XLV) outperforming â AI drug discovery + GLP-1. Utilities (CEG, VST) surging â AI data center power demand. Mag 7 lagging since Oct 2025. Gold in multi-year secular bull. Fed cuts priced September 2026. AI supercycle real plays: electricity, cybersecurity, ad tech, drug discovery, robotics. Stagflation risk from Iran + tariffs.
+CURRENT MACRO CONTEXT (March 2026): S&P 500 coiling between 6800-7000, potential Q2/Q3 volatility. Energy (XLE) #1 sector YTD Ã¢ÂÂ Iran conflict driving oil. Healthcare (LLY, XLV) outperforming Ã¢ÂÂ AI drug discovery + GLP-1. Utilities (CEG, VST) surging Ã¢ÂÂ AI data center power demand. Mag 7 lagging since Oct 2025. Gold in multi-year secular bull. Fed cuts priced September 2026. AI supercycle real plays: electricity, cybersecurity, ad tech, drug discovery, robotics. Stagflation risk from Iran + tariffs.
 
 RULES: No generic retail advice. No index-only suggestions. No avoiding difficult criticism. Always prioritize alpha, risk-adjusted returns, long-term compounding.`;
 
@@ -340,13 +340,13 @@ const ANALYSIS_PROMPT = ANALYST_PERSONA + `\n\nAnalyze the portfolio. Return ONL
 
 const SCAN_PROMPT = ANALYST_PERSONA + `\n\nSearch the web for recent news and market data. Return ONLY valid JSON:\n{"marketSummary":"<2-3 sentences>","newsItems":[{"ticker":"<ticker or MARKET>","headline":"<actual headline>","summary":"<1-2 sentences>","impact":"bullish"|"bearish"|"neutral","severity":"critical"|"warning"|"info","recommendation":"<specific action>","telegramWorthy":<true|false>}],"sectorTrends":[{"sector":"<n>","trend":"up"|"down"|"sideways","note":"<one sentence>","action":"rotate-in"|"rotate-out"|"hold"}],"buyOpportunities":[{"ticker":"<ticker>","name":"<full name>","thesis":"<2-3 sentence buy thesis>","suggestedAllocation":"<% of portfolio>","urgency":"immediate"|"this-week"|"this-month","category":"<e.g. AI power, energy hedge>","telegramWorthy":<true|false>}],"rotationAlerts":[{"from":"<ticker>","to":"<ticker>","reason":"<why now>","telegramWorthy":<true|false>}],"topRisk":"<biggest risk>","topOpportunity":"<best opportunity>"}`;
 
-// ââ SCREENS ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂ SCREENS Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
 
-// ââ TABS âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂ TABS Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 function showTab(name) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -356,21 +356,21 @@ function showTab(name) {
   if (content) content.classList.add('active');
 }
 
-// ââ NOTIFICATIONS ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂ NOTIFICATIONS Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 function showNotif(msg, type='info') {
   const el = document.getElementById('notif');
   el.textContent = msg; el.className = 'notif ' + type + ' show';
   setTimeout(() => el.classList.remove('show'), 4000);
 }
 
-// ââ PROGRESS âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂ PROGRESS Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 function setProgress(pct, text) {
   document.getElementById('progress-fill').style.width = pct + '%';
   document.getElementById('progress-pct').textContent = pct + '%';
   document.getElementById('progress-text').textContent = text;
 }
 
-// ââ SUPABASE âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂ SUPABASE Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 async function sbGet(key) {
   try {
     const r = await fetch(`${CREDS.sbUrl}/rest/v1/portfolio_store?key=eq.${encodeURIComponent(key)}&select=value`, {
@@ -391,7 +391,7 @@ async function sbSet(key, value) {
   } catch { return false; }
 }
 
-// ââ TELEGRAM âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂ TELEGRAM Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 async function tgSend(msg) {
   if (!CREDS?.tgToken || !CREDS?.tgChatId) return;
   try {
@@ -410,7 +410,7 @@ async function findChatId(inputId='tg-chatid', tokenId='tg-token') {
   try {
     const r = await fetch(`https://api.telegram.org/bot${token}/getUpdates`);
     const d = await r.json();
-    if (!d.ok) { showNotif('Invalid token â please check it', 'error'); return; }
+    if (!d.ok) { showNotif('Invalid token Ã¢ÂÂ please check it', 'error'); return; }
     const updates = d.result;
     if (!updates?.length) { showNotif('No messages found. Send any message to your bot in Telegram first, then try again.', 'error'); return; }
     const chatId = updates[updates.length-1].message?.chat?.id || updates[0].message?.chat?.id;
@@ -432,14 +432,14 @@ async function testTelegram() {
   try {
     const r = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: chatId, text: 'â <b>Atlas Wealth Monitor</b>\n\nTelegram is connected! You\'ll receive alerts for:\nâ¢ Critical news on your holdings\nâ¢ Rebalance opportunities\nâ¢ New buy candidates matching your strategy', parse_mode: 'HTML' })
+      body: JSON.stringify({ chat_id: chatId, text: 'Ã¢ÂÂ <b>Atlas Wealth Monitor</b>\n\nTelegram is connected! You\'ll receive alerts for:\nÃ¢ÂÂ¢ Critical news on your holdings\nÃ¢ÂÂ¢ Rebalance opportunities\nÃ¢ÂÂ¢ New buy candidates matching your strategy', parse_mode: 'HTML' })
     });
     const d = await r.json();
     d.ok ? showNotif('Test message sent!', 'success') : showNotif('Failed: ' + d.description, 'error');
   } catch(e) { showNotif('Error: ' + e.message, 'error'); }
 }
 
-// ââ CLAUDE API âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂ CLAUDE API Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 async function callClaude(system, user, webSearch=false) {
   const body = { model: 'claude-sonnet-4-20250514', max_tokens: 4000, system, messages: [{ role: 'user', content: user }] };
   if (webSearch) body.tools = [{ type: 'web_search_20250305', name: 'web_search' }];
@@ -460,7 +460,7 @@ async function callClaude(system, user, webSearch=false) {
   return JSON.parse(jsonMatch[0]);
 }
 
-// ââ XLS PARSE ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂ XLS PARSE Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 function parseXLS(file) {
   return new Promise((res, rej) => {
     const rd = new FileReader();
@@ -492,9 +492,9 @@ function parseXLS(file) {
   });
 }
 
-// ââ HELPERS ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
-function fmtVal(n) { const v=parseFloat(String(n||0).replace(/[$,]/g,'')); return isNaN(v)?'â':'$'+Math.abs(v).toLocaleString(undefined,{maximumFractionDigits:0}); }
-function fmtPct(n) { const v=parseFloat(String(n||0).replace(/[%,]/g,'')); return isNaN(v)?'â':(v>=0?'+':'')+v.toFixed(1)+'%'; }
+// Ã¢ÂÂÃ¢ÂÂ HELPERS Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+function fmtVal(n) { const v=parseFloat(String(n||0).replace(/[$,]/g,'')); return isNaN(v)?'Ã¢ÂÂ':'$'+Math.abs(v).toLocaleString(undefined,{maximumFractionDigits:0}); }
+function fmtPct(n) { const v=parseFloat(String(n||0).replace(/[%,]/g,'')); return isNaN(v)?'Ã¢ÂÂ':(v>=0?'+':'')+v.toFixed(1)+'%'; }
 function timeAgo(ts) { if(!ts)return'never'; const m=Math.floor((Date.now()-ts)/60000); if(m<1)return'just now'; if(m<60)return m+'m ago'; const h=Math.floor(m/60); if(h<24)return h+'h ago'; return Math.floor(h/24)+'d ago'; }
 function scoreColor(s) { return s>=7?'#22c55e':s>=5?'#f59e0b':'#ef4444'; }
 function scoreRing(score, label, size=80) {
@@ -513,7 +513,7 @@ const ACT_COLORS = { SELL:{bg:'#1a0808',text:'#fca5a5',border:'#7f1d1d',badge:'#
 const ALERT_COLORS = { critical:{bg:'#1a0808',border:'#7f1d1d',text:'#fca5a5',dot:'#ef4444'}, warning:{bg:'#1a1208',border:'#78350f',text:'#fcd34d',dot:'#f59e0b'}, info:{bg:'#08101a',border:'#1e3a5f',text:'#93c5fd',dot:'#3b82f6'} };
 const VERDICT_COLORS = {'strong-hold':'#22c55e','hold':'#22c55e','add':'#60a5fa','trim':'#f59e0b','sell':'#ef4444'};
 
-// ââ SETUP / SETTINGS âââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂ SETUP / SETTINGS Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 function saveSetup() {
   const sbUrl = document.getElementById('sb-url').value.trim();
   const sbKey = document.getElementById('sb-key').value.trim();
@@ -552,16 +552,22 @@ async function loadFromSupabase() {
     if (cl) STATE.checkLog = cl;
     setProgress(100, 'Done!');
     setTimeout(() => {
-      if (STATE.portfolio) { renderDashboard(); showScreen('screen-dashboard'); }
-      else { showScreen('screen-upload'); }
+      // Always go to dashboard - upload screen is bypassed entirely
+      // If no portfolio yet, dashboard shows a prompt to upload via the header button
+      renderDashboard();
+      showScreen('screen-dashboard');
+      // If we have creds but no portfolio, auto-prompt with a notification
+      if (!STATE.portfolio) {
+        setTimeout(() => showNotif('No portfolio loaded yet — click "Update portfolio" to upload your Chase XLS', 'info'), 800);
+      }
     }, 300);
   } catch(e) {
     showNotif('Supabase connection failed: ' + e.message, 'error');
-    showScreen('screen-upload');
+    showScreen('screen-dashboard');
   }
 }
 
-// ââ FILE HANDLING ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂ FILE HANDLING Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 function onDragOver(e) { e.preventDefault(); document.getElementById('drag-zone').classList.add('dragover'); }
 function onDragLeave() { document.getElementById('drag-zone').classList.remove('dragover'); }
 function onDrop(e) { e.preventDefault(); onDragLeave(); handleFile(e.dataTransfer.files[0]); }
@@ -582,10 +588,10 @@ async function handleFile(file) {
     await doScan(holdings);
     setProgress(100, 'Complete!');
     setTimeout(() => { renderDashboard(); showScreen('screen-dashboard'); }, 400);
-  } catch(e) { showNotif(e.message, 'error'); showScreen(STATE.portfolio ? 'screen-dashboard' : 'screen-upload'); }
+  } catch(e) { showNotif(e.message, 'error'); showScreen('screen-dashboard'); }
 }
 
-// ââ ANALYSIS âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂ ANALYSIS Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 async function doAnalysis(holdings) {
   const result = await callClaude(ANALYSIS_PROMPT, `Analyze this JP Morgan Chase portfolio. Date: ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}.\n\nHoldings:\n${JSON.stringify(holdings,null,2)}`);
   result.timestamp = Date.now();
@@ -605,7 +611,7 @@ async function doAnalysis(holdings) {
   if (result.telegramWorthy) {
     const crits = (result.alerts||[]).filter(a=>a.level==='critical');
     if (crits.length) {
-      const msg = `ð´ <b>PORTFOLIO ALERT</b>\n\nScore: ${result.score}/10\n\n` + crits.map(a=>`â ï¸ <b>[${a.ticker}]</b> ${a.title}\n${a.message}`).join('\n\n') + `\n\n<i>Atlas Wealth Monitor Â· ${new Date().toLocaleTimeString()}</i>`;
+      const msg = `Ã°ÂÂÂ´ <b>PORTFOLIO ALERT</b>\n\nScore: ${result.score}/10\n\n` + crits.map(a=>`Ã¢ÂÂ Ã¯Â¸Â <b>[${a.ticker}]</b> ${a.title}\n${a.message}`).join('\n\n') + `\n\n<i>Atlas Wealth Monitor ÃÂ· ${new Date().toLocaleTimeString()}</i>`;
       await tgSend(msg);
     }
   }
@@ -623,13 +629,13 @@ async function doScan(holdings) {
   await sbSet('check_log', STATE.checkLog);
 
   const critNews = (result.newsItems||[]).filter(n=>n.telegramWorthy);
-  if (critNews.length) await tgSend(`ð´ <b>CRITICAL MARKET NEWS</b>\n\n` + critNews.map(n=>`ð° <b>[${n.ticker}]</b> ${n.headline}\nâ ${n.recommendation}`).join('\n\n') + `\n\n<i>Atlas Wealth Monitor Â· ${new Date().toLocaleTimeString()}</i>`);
+  if (critNews.length) await tgSend(`Ã°ÂÂÂ´ <b>CRITICAL MARKET NEWS</b>\n\n` + critNews.map(n=>`Ã°ÂÂÂ° <b>[${n.ticker}]</b> ${n.headline}\nÃ¢ÂÂ ${n.recommendation}`).join('\n\n') + `\n\n<i>Atlas Wealth Monitor ÃÂ· ${new Date().toLocaleTimeString()}</i>`);
 
   const rotations = (result.rotationAlerts||[]).filter(r=>r.telegramWorthy);
-  if (rotations.length) await tgSend(`ð <b>REBALANCE OPPORTUNITY</b>\n\n` + rotations.map(r=>`ð <b>${r.from}</b> â <b>${r.to}</b>\n${r.reason}`).join('\n\n') + `\n\n<i>Atlas Wealth Monitor Â· ${new Date().toLocaleTimeString()}</i>`);
+  if (rotations.length) await tgSend(`Ã°ÂÂÂ <b>REBALANCE OPPORTUNITY</b>\n\n` + rotations.map(r=>`Ã°ÂÂÂ <b>${r.from}</b> Ã¢ÂÂ <b>${r.to}</b>\n${r.reason}`).join('\n\n') + `\n\n<i>Atlas Wealth Monitor ÃÂ· ${new Date().toLocaleTimeString()}</i>`);
 
   const buys = (result.buyOpportunities||[]).filter(b=>b.telegramWorthy);
-  if (buys.length) await tgSend(`ð <b>NEW BUY OPPORTUNITY</b>\n\n` + buys.map(b=>`ð <b>${b.ticker}</b> â ${b.name}\n${b.thesis}\nSuggested: ${b.suggestedAllocation}`).join('\n\n') + `\n\n<i>Atlas Wealth Monitor Â· ${new Date().toLocaleTimeString()}</i>`);
+  if (buys.length) await tgSend(`Ã°ÂÂÂ <b>NEW BUY OPPORTUNITY</b>\n\n` + buys.map(b=>`Ã°ÂÂÂ <b>${b.ticker}</b> Ã¢ÂÂ ${b.name}\n${b.thesis}\nSuggested: ${b.suggestedAllocation}`).join('\n\n') + `\n\n<i>Atlas Wealth Monitor ÃÂ· ${new Date().toLocaleTimeString()}</i>`);
 }
 
 async function reAnalyze() {
@@ -672,7 +678,7 @@ function setBusy(busy, type) {
   }
 }
 
-// ââ RENDER âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂ RENDER Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 function renderDashboard() {
   const a = STATE.analysis || {};
   const s = STATE.scan || {};
@@ -681,7 +687,7 @@ function renderDashboard() {
   const buyOpps = s.buyOpportunities||[];
 
   // Header meta
-  document.getElementById('header-meta').textContent = `${p.holdings?.length||0} positions Â· saved ${timeAgo(p.savedAt)} Â· analyzed ${timeAgo(a.timestamp)} Â· scanned ${timeAgo(s.timestamp)}`;
+  document.getElementById('header-meta').textContent = `${p.holdings?.length||0} positions ÃÂ· saved ${timeAgo(p.savedAt)} ÃÂ· analyzed ${timeAgo(a.timestamp)} ÃÂ· scanned ${timeAgo(s.timestamp)}`;
 
   // Critical badge
   const cb = document.getElementById('critical-badge');
@@ -705,16 +711,16 @@ function renderDashboard() {
   // Tab labels
   document.getElementById('tab-market').textContent = 'Market Scan' + (buyOpps.length?` (${buyOpps.length} buys)`:'');
   document.getElementById('tab-news').textContent = 'News' + ((s.newsItems?.length)?` (${s.newsItems.length})`:'');
-  document.getElementById('tab-alerts').textContent = 'Alerts' + (critCount?` ð´${critCount}`:'');
+  document.getElementById('tab-alerts').textContent = 'Alerts' + (critCount?` Ã°ÂÂÂ´${critCount}`:'');
   document.getElementById('tab-actions').textContent = 'Actions' + ((a.actionItems||[]).filter(x=>x.urgency==='immediate').length?` (${(a.actionItems||[]).filter(x=>x.urgency==='immediate').length})`:'');
 
-  // ââ OVERVIEW ââ
+  // Ã¢ÂÂÃ¢ÂÂ OVERVIEW Ã¢ÂÂÃ¢ÂÂ
   document.getElementById('ring-current').innerHTML = scoreRing(a.score||0,'Current',80);
   document.getElementById('ring-rebalance').innerHTML = scoreRing(a.scoreAfterRebalance||0,'Post-rebalance',80);
 
   let sw = '';
-  (a.strengths||[]).slice(0,2).forEach(s=>{ sw+=`<div><span style="color:#22c55e">â</span> ${s}</div>`; });
-  (a.weaknesses||[]).slice(0,2).forEach(w=>{ sw+=`<div><span style="color:#ef4444">â</span> ${w}</div>`; });
+  (a.strengths||[]).slice(0,2).forEach(s=>{ sw+=`<div><span style="color:#22c55e">Ã¢ÂÂ</span> ${s}</div>`; });
+  (a.weaknesses||[]).slice(0,2).forEach(w=>{ sw+=`<div><span style="color:#ef4444">Ã¢ÂÂ</span> ${w}</div>`; });
   document.getElementById('strengths-weaknesses').innerHTML = sw;
 
   const urgent = (a.actionItems||[]).filter(x=>x.urgency==='immediate');
@@ -725,8 +731,8 @@ function renderDashboard() {
 
   let pulse = '';
   if (s.marketSummary) pulse += `<p style="font-size:13px;color:#9ca3af;line-height:1.7;margin-bottom:10px">${s.marketSummary}</p>`;
-  if (s.topRisk) pulse += `<div style="background:#1a0808;border:0.5px solid #7f1d1d;border-radius:8px;padding:9px 12px;font-size:12px;color:#fca5a5;margin-bottom:8px">â  ${s.topRisk}</div>`;
-  if (s.topOpportunity) pulse += `<div style="background:#081a0e;border:0.5px solid #14532d;border-radius:8px;padding:9px 12px;font-size:12px;color:#86efac">â ${s.topOpportunity}</div>`;
+  if (s.topRisk) pulse += `<div style="background:#1a0808;border:0.5px solid #7f1d1d;border-radius:8px;padding:9px 12px;font-size:12px;color:#fca5a5;margin-bottom:8px">Ã¢ÂÂ  ${s.topRisk}</div>`;
+  if (s.topOpportunity) pulse += `<div style="background:#081a0e;border:0.5px solid #14532d;border-radius:8px;padding:9px 12px;font-size:12px;color:#86efac">Ã¢ÂÂ ${s.topOpportunity}</div>`;
   if (!pulse) pulse = '<p style="font-size:13px;color:#374151">Run market scan to populate.</p>';
   document.getElementById('market-pulse').innerHTML = pulse;
 
@@ -746,20 +752,20 @@ function renderDashboard() {
       </div>`).join('');
   }
 
-  // ââ MARKET SCAN ââ
+  // Ã¢ÂÂÃ¢ÂÂ MARKET SCAN Ã¢ÂÂÃ¢ÂÂ
   const hasScanData = s.buyOpportunities?.length || s.rotationAlerts?.length || s.newsItems?.length;
   document.getElementById('market-empty').style.display = hasScanData?'none':'block';
   document.getElementById('market-content').style.display = hasScanData?'block':'none';
   if (hasScanData) {
     const rots = s.rotationAlerts||[];
-    document.getElementById('rotation-section').innerHTML = rots.length ? `<div class="label" style="color:#f59e0b;margin-bottom:12px">Rotation Alerts</div>` + rots.map(r=>`<div class="rotation-card"><span style="background:#dc2626;color:white;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px">${r.from}</span><span style="color:#f59e0b;font-size:18px">â</span><span style="background:#16a34a;color:white;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px">${r.to}</span><span style="flex:1;font-size:13px;color:#9ca3af">${r.reason}</span>${r.telegramWorthy?'<span style="font-size:10px;color:#f59e0b">ð± Notified</span>':''}</div>`).join('') : '';
+    document.getElementById('rotation-section').innerHTML = rots.length ? `<div class="label" style="color:#f59e0b;margin-bottom:12px">Rotation Alerts</div>` + rots.map(r=>`<div class="rotation-card"><span style="background:#dc2626;color:white;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px">${r.from}</span><span style="color:#f59e0b;font-size:18px">Ã¢ÂÂ</span><span style="background:#16a34a;color:white;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px">${r.to}</span><span style="flex:1;font-size:13px;color:#9ca3af">${r.reason}</span>${r.telegramWorthy?'<span style="font-size:10px;color:#f59e0b">Ã°ÂÂÂ± Notified</span>':''}</div>`).join('') : '';
 
     const trends = s.sectorTrends||[];
     document.getElementById('sector-trends-section').innerHTML = trends.length ? `<div class="label" style="margin-bottom:10px">Sector Trends</div><div style="display:flex;gap:8px;flex-wrap:wrap">` + trends.map(t=>{
       const tc=t.trend==='up'?'#22c55e':t.trend==='down'?'#ef4444':'#f59e0b';
       const ac=t.action==='rotate-in'?'#081a0e':t.action==='rotate-out'?'#1a0808':'#0a0a12';
       const ab=t.action==='rotate-in'?'#14532d':t.action==='rotate-out'?'#7f1d1d':'#1f2937';
-      return `<div style="background:${ac};border:0.5px solid ${ab};border-radius:8px;padding:8px 14px"><span style="color:${tc}">${t.trend==='up'?'â':t.trend==='down'?'â':'â'} </span><span style="color:#e5e7eb;font-weight:500;font-size:13px">${t.sector}</span><div style="font-size:11px;color:#6b7280;margin-top:3px">${t.note}</div></div>`;
+      return `<div style="background:${ac};border:0.5px solid ${ab};border-radius:8px;padding:8px 14px"><span style="color:${tc}">${t.trend==='up'?'Ã¢ÂÂ':t.trend==='down'?'Ã¢ÂÂ':'Ã¢ÂÂ'} </span><span style="color:#e5e7eb;font-weight:500;font-size:13px">${t.sector}</span><div style="font-size:11px;color:#6b7280;margin-top:3px">${t.note}</div></div>`;
     }).join('') + '</div>' : '';
 
     document.getElementById('buy-opps-section').innerHTML = buyOpps.length ? `<div class="label" style="color:#22c55e;margin-bottom:12px">${buyOpps.length} Buy Opportunit${buyOpps.length>1?'ies':'y'}</div>` + `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px">` + buyOpps.map(b=>`
@@ -771,14 +777,14 @@ function renderDashboard() {
         <p style="font-size:13px;color:#9ca3af;line-height:1.6;margin-bottom:10px">${b.thesis||''}</p>
         <div style="display:flex;justify-content:space-between;align-items:center">
           <span style="font-size:11px;background:#0a2010;color:#22c55e;padding:2px 8px;border-radius:4px">${b.category||''}</span>
-          ${b.telegramWorthy?'<span style="font-size:11px;color:#f59e0b">ð± Notified</span>':''}
+          ${b.telegramWorthy?'<span style="font-size:11px;color:#f59e0b">Ã°ÂÂÂ± Notified</span>':''}
         </div>
       </div>`).join('') + '</div>' : '';
 
-    document.getElementById('scan-footer').textContent = s.timestamp ? `Last scan: ${timeAgo(s.timestamp)} Â· Powered by live web search` : '';
+    document.getElementById('scan-footer').textContent = s.timestamp ? `Last scan: ${timeAgo(s.timestamp)} ÃÂ· Powered by live web search` : '';
   }
 
-  // ââ NEWS ââ
+  // Ã¢ÂÂÃ¢ÂÂ NEWS Ã¢ÂÂÃ¢ÂÂ
   if (s.marketSummary) { const ns=document.getElementById('news-summary'); ns.style.display='block'; ns.textContent=s.marketSummary; }
   document.getElementById('news-list').innerHTML = (s.newsItems||[]).length ? (s.newsItems||[]).map(item=>{
     const c=ALERT_COLORS[item.severity]||ALERT_COLORS.info;
@@ -789,17 +795,17 @@ function renderDashboard() {
         <div style="flex:1">
           <div style="display:flex;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:6px">
             <span style="font-size:11px;font-weight:700;color:${c.text};background:rgba(0,0,0,0.2);padding:2px 8px;border-radius:4px">${item.ticker}</span>
-            <div style="display:flex;gap:8px;align-items:center"><span style="font-size:11px;color:${ic};text-transform:uppercase">${item.impact}</span>${item.telegramWorthy?'<span style="font-size:10px;color:#f59e0b">ð±</span>':''}</div>
+            <div style="display:flex;gap:8px;align-items:center"><span style="font-size:11px;color:${ic};text-transform:uppercase">${item.impact}</span>${item.telegramWorthy?'<span style="font-size:10px;color:#f59e0b">Ã°ÂÂÂ±</span>':''}</div>
           </div>
           <div style="font-size:14px;font-weight:500;color:#e5e7eb;margin-bottom:4px">${item.headline}</div>
           <div style="font-size:13px;color:#9ca3af;line-height:1.6;margin-bottom:${item.recommendation?'8px':'0'}">${item.summary}</div>
-          ${item.recommendation?`<div style="font-size:12px;color:${ic};background:rgba(0,0,0,0.15);border-radius:6px;padding:6px 10px">â ${item.recommendation}</div>`:''}
+          ${item.recommendation?`<div style="font-size:12px;color:${ic};background:rgba(0,0,0,0.15);border-radius:6px;padding:6px 10px">Ã¢ÂÂ ${item.recommendation}</div>`:''}
         </div>
       </div>
     </div>`;
   }).join('') : '<p style="font-size:13px;color:#374151">Run a market scan to see news.</p>';
 
-  // ââ ALERTS ââ
+  // Ã¢ÂÂÃ¢ÂÂ ALERTS Ã¢ÂÂÃ¢ÂÂ
   document.getElementById('current-alerts').innerHTML = (a.alerts||[]).length ? (a.alerts||[]).map(alert=>{
     const c=ALERT_COLORS[alert.level]||ALERT_COLORS.info;
     return `<div style="background:${c.bg};border:0.5px solid ${c.border};border-radius:10px;padding:12px 14px;display:flex;gap:10px;margin-bottom:8px">
@@ -819,8 +825,8 @@ function renderDashboard() {
       </div>`).join('');
   }
 
-  // ââ ACTIONS ââ
-  const urgGroups = { immediate:'â¡ Immediate', 'this-week':'This week', 'this-month':'This month' };
+  // Ã¢ÂÂÃ¢ÂÂ ACTIONS Ã¢ÂÂÃ¢ÂÂ
+  const urgGroups = { immediate:'Ã¢ÂÂ¡ Immediate', 'this-week':'This week', 'this-month':'This month' };
   let actHtml = '';
   Object.entries(urgGroups).forEach(([urg, label]) => {
     const items = (a.actionItems||[]).filter(x=>x.urgency===urg);
@@ -847,17 +853,17 @@ function renderDashboard() {
   // Also show scan buy opportunities in actions tab
   const scanBuys = (STATE.scan?.buyOpportunities||[]);
   if (scanBuys.length) {
-    actHtml += `<div style="margin-bottom:24px"><div class="label" style="margin-bottom:10px;color:#22c55e">Market Scan — Buy Opportunities</div>` +
+    actHtml += `<div style="margin-bottom:24px"><div class="label" style="margin-bottom:10px;color:#22c55e">Market Scan â Buy Opportunities</div>` +
       scanBuys.map(b => {
         const totalVal = parseFloat(String(STATE.analysis?.portfolioValue||55000));
         const dollarAmt = b.suggestedAllocation ? (totalVal * parseFloat(b.suggestedAllocation) / 100).toFixed(0) : null;
         return `<div style="background:#081a0e;border:0.5px solid #14532d;border-radius:10px;padding:12px 16px;display:flex;gap:12px;align-items:flex-start;margin-bottom:8px">
           <span style="background:#16a34a;color:white;font-size:11px;font-weight:700;padding:3px 10px;border-radius:5px;flex-shrink:0">BUY</span>
-          <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#86efac;margin-bottom:2px">${b.ticker} — ${b.name}</div>
+          <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#86efac;margin-bottom:2px">${b.ticker} â ${b.name}</div>
           <div style="font-size:13px;color:#6b7280">${b.thesis||''}</div>
           ${dollarAmt?'<div style="font-size:12px;color:#86efac;margin-top:4px;font-weight:600">Suggested: '+b.suggestedAllocation+' of portfolio = ~
 
-  // ââ POSITIONS ââ
+  // Ã¢ÂÂÃ¢ÂÂ POSITIONS Ã¢ÂÂÃ¢ÂÂ
   const pa = a.topPositionAnalysis||[];
   document.getElementById('positions-tbody').innerHTML = (p.holdings||[]).map(h=>{
     const gl=parseFloat((h.unrealizedGL||'0').replace(/[$,]/g,''));
@@ -867,14 +873,14 @@ function renderDashboard() {
     return `<tr>
       <td style="font-weight:600;color:#f9fafb">${h.ticker}</td>
       <td style="color:#6b7280;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(h.description||'').substring(0,28)}</td>
-      <td>${h.value?'$'+parseFloat(h.value.replace(/[$,]/g,'')).toLocaleString():'â'}</td>
+      <td>${h.value?'$'+parseFloat(h.value.replace(/[$,]/g,'')).toLocaleString():'Ã¢ÂÂ'}</td>
       <td style="color:${glColor}">${gl>=0?'+':''}$${Math.abs(gl).toLocaleString()}</td>
       <td style="color:${glColor}">${glp>=0?'+':''}${glp.toFixed(1)}%</td>
-      <td>${pos?`<span style="font-size:11px;font-weight:700;color:${VERDICT_COLORS[pos.verdict]||'#9ca3af'};text-transform:uppercase">${pos.verdict}</span><div style="font-size:11px;color:#4b5563;margin-top:2px">${pos.note||''}</div>`:'<span style="color:#1f2937">â</span>'}</td>
+      <td>${pos?`<span style="font-size:11px;font-weight:700;color:${VERDICT_COLORS[pos.verdict]||'#9ca3af'};text-transform:uppercase">${pos.verdict}</span><div style="font-size:11px;color:#4b5563;margin-top:2px">${pos.note||''}</div>`:'<span style="color:#1f2937">Ã¢ÂÂ</span>'}</td>
     </tr>`;
   }).join('');
 
-  // ââ STRESS TESTS ââ
+  // Ã¢ÂÂÃ¢ÂÂ STRESS TESTS Ã¢ÂÂÃ¢ÂÂ
   document.getElementById('stress-list').innerHTML = (a.stressTests||[]).length ? (a.stressTests||[]).map(st=>`
     <div class="stress-card">
       <div style="font-size:13px;font-weight:600;color:#e5e7eb;margin-bottom:12px">${st.scenario}</div>
@@ -882,16 +888,16 @@ function renderDashboard() {
       <div style="background:#081a0e;border-radius:8px;padding:8px 12px"><div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px">Post-rebalance</div><div style="font-size:15px;font-weight:600;color:#22c55e">${st.rebalancedImpact}</div></div>
     </div>`).join('') : '<p style="font-size:13px;color:#374151">Run an analysis to generate stress tests.</p>';
 
-  // ââ CHECK LOG ââ
-  document.getElementById('log-label').textContent = `Check history (${STATE.checkLog.length} entries Â· stored in Supabase)`;
+  // Ã¢ÂÂÃ¢ÂÂ CHECK LOG Ã¢ÂÂÃ¢ÂÂ
+  document.getElementById('log-label').textContent = `Check history (${STATE.checkLog.length} entries ÃÂ· stored in Supabase)`;
   document.getElementById('log-list').innerHTML = STATE.checkLog.map(entry=>`
     <div class="log-entry">
-      <div style="width:36px;height:36px;border-radius:8px;background:${entry.type==='scan'?'#0d1829':'#0d0a1f'};display:flex;align-items:center;justify-content:center;font-size:18px">${entry.type==='scan'?'ð°':'ð'}</div>
-      <div style="flex:1"><div style="font-size:13px;font-weight:500;color:#e5e7eb">${entry.type==='scan'?'Market scan':'Portfolio analysis'}</div><div style="font-size:12px;color:#6b7280">${entry.score?`Score: ${entry.score}/10 Â· `:''}${entry.alertCount||0} alert${entry.alertCount!==1?'s':''}${entry.marketSummary?' Â· '+entry.marketSummary+'...':''}</div></div>
+      <div style="width:36px;height:36px;border-radius:8px;background:${entry.type==='scan'?'#0d1829':'#0d0a1f'};display:flex;align-items:center;justify-content:center;font-size:18px">${entry.type==='scan'?'Ã°ÂÂÂ°':'Ã°ÂÂÂ'}</div>
+      <div style="flex:1"><div style="font-size:13px;font-weight:500;color:#e5e7eb">${entry.type==='scan'?'Market scan':'Portfolio analysis'}</div><div style="font-size:12px;color:#6b7280">${entry.score?`Score: ${entry.score}/10 ÃÂ· `:''}${entry.alertCount||0} alert${entry.alertCount!==1?'s':''}${entry.marketSummary?' ÃÂ· '+entry.marketSummary+'...':''}</div></div>
       <div style="font-size:12px;color:#374151">${timeAgo(entry.timestamp)}</div>
     </div>`).join('') || '<p style="font-size:13px;color:#374151">No checks run yet.</p>';
 
-  // ââ SETTINGS TAB (pre-fill) ââ
+  // Ã¢ÂÂÃ¢ÂÂ SETTINGS TAB (pre-fill) Ã¢ÂÂÃ¢ÂÂ
   if (CREDS) {
     document.getElementById('s-sb-url').value = CREDS.sbUrl||'';
     document.getElementById('s-sb-key').value = CREDS.sbKey||'';
@@ -901,7 +907,7 @@ function renderDashboard() {
   }
 }
 
-// ââ INIT âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂ INIT Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 (function init() {
   const saved = localStorage.getItem('atlas_creds');
   if (saved) {
@@ -925,7 +931,7 @@ function renderDashboard() {
   }
   document.getElementById('actions-list').innerHTML = actHtml || '<p style="font-size:13px;color:#374151">No action items. Run an analysis to generate.</p>';
 
-  // ââ POSITIONS ââ
+  // Ã¢ÂÂÃ¢ÂÂ POSITIONS Ã¢ÂÂÃ¢ÂÂ
   const pa = a.topPositionAnalysis||[];
   document.getElementById('positions-tbody').innerHTML = (p.holdings||[]).map(h=>{
     const gl=parseFloat((h.unrealizedGL||'0').replace(/[$,]/g,''));
@@ -935,14 +941,14 @@ function renderDashboard() {
     return `<tr>
       <td style="font-weight:600;color:#f9fafb">${h.ticker}</td>
       <td style="color:#6b7280;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(h.description||'').substring(0,28)}</td>
-      <td>${h.value?'$'+parseFloat(h.value.replace(/[$,]/g,'')).toLocaleString():'â'}</td>
+      <td>${h.value?'$'+parseFloat(h.value.replace(/[$,]/g,'')).toLocaleString():'Ã¢ÂÂ'}</td>
       <td style="color:${glColor}">${gl>=0?'+':''}$${Math.abs(gl).toLocaleString()}</td>
       <td style="color:${glColor}">${glp>=0?'+':''}${glp.toFixed(1)}%</td>
-      <td>${pos?`<span style="font-size:11px;font-weight:700;color:${VERDICT_COLORS[pos.verdict]||'#9ca3af'};text-transform:uppercase">${pos.verdict}</span><div style="font-size:11px;color:#4b5563;margin-top:2px">${pos.note||''}</div>`:'<span style="color:#1f2937">â</span>'}</td>
+      <td>${pos?`<span style="font-size:11px;font-weight:700;color:${VERDICT_COLORS[pos.verdict]||'#9ca3af'};text-transform:uppercase">${pos.verdict}</span><div style="font-size:11px;color:#4b5563;margin-top:2px">${pos.note||''}</div>`:'<span style="color:#1f2937">Ã¢ÂÂ</span>'}</td>
     </tr>`;
   }).join('');
 
-  // ââ STRESS TESTS ââ
+  // Ã¢ÂÂÃ¢ÂÂ STRESS TESTS Ã¢ÂÂÃ¢ÂÂ
   document.getElementById('stress-list').innerHTML = (a.stressTests||[]).length ? (a.stressTests||[]).map(st=>`
     <div class="stress-card">
       <div style="font-size:13px;font-weight:600;color:#e5e7eb;margin-bottom:12px">${st.scenario}</div>
@@ -950,16 +956,16 @@ function renderDashboard() {
       <div style="background:#081a0e;border-radius:8px;padding:8px 12px"><div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px">Post-rebalance</div><div style="font-size:15px;font-weight:600;color:#22c55e">${st.rebalancedImpact}</div></div>
     </div>`).join('') : '<p style="font-size:13px;color:#374151">Run an analysis to generate stress tests.</p>';
 
-  // ââ CHECK LOG ââ
-  document.getElementById('log-label').textContent = `Check history (${STATE.checkLog.length} entries Â· stored in Supabase)`;
+  // Ã¢ÂÂÃ¢ÂÂ CHECK LOG Ã¢ÂÂÃ¢ÂÂ
+  document.getElementById('log-label').textContent = `Check history (${STATE.checkLog.length} entries ÃÂ· stored in Supabase)`;
   document.getElementById('log-list').innerHTML = STATE.checkLog.map(entry=>`
     <div class="log-entry">
-      <div style="width:36px;height:36px;border-radius:8px;background:${entry.type==='scan'?'#0d1829':'#0d0a1f'};display:flex;align-items:center;justify-content:center;font-size:18px">${entry.type==='scan'?'ð°':'ð'}</div>
-      <div style="flex:1"><div style="font-size:13px;font-weight:500;color:#e5e7eb">${entry.type==='scan'?'Market scan':'Portfolio analysis'}</div><div style="font-size:12px;color:#6b7280">${entry.score?`Score: ${entry.score}/10 Â· `:''}${entry.alertCount||0} alert${entry.alertCount!==1?'s':''}${entry.marketSummary?' Â· '+entry.marketSummary+'...':''}</div></div>
+      <div style="width:36px;height:36px;border-radius:8px;background:${entry.type==='scan'?'#0d1829':'#0d0a1f'};display:flex;align-items:center;justify-content:center;font-size:18px">${entry.type==='scan'?'Ã°ÂÂÂ°':'Ã°ÂÂÂ'}</div>
+      <div style="flex:1"><div style="font-size:13px;font-weight:500;color:#e5e7eb">${entry.type==='scan'?'Market scan':'Portfolio analysis'}</div><div style="font-size:12px;color:#6b7280">${entry.score?`Score: ${entry.score}/10 ÃÂ· `:''}${entry.alertCount||0} alert${entry.alertCount!==1?'s':''}${entry.marketSummary?' ÃÂ· '+entry.marketSummary+'...':''}</div></div>
       <div style="font-size:12px;color:#374151">${timeAgo(entry.timestamp)}</div>
     </div>`).join('') || '<p style="font-size:13px;color:#374151">No checks run yet.</p>';
 
-  // ââ SETTINGS TAB (pre-fill) ââ
+  // Ã¢ÂÂÃ¢ÂÂ SETTINGS TAB (pre-fill) Ã¢ÂÂÃ¢ÂÂ
   if (CREDS) {
     document.getElementById('s-sb-url').value = CREDS.sbUrl||'';
     document.getElementById('s-sb-key').value = CREDS.sbKey||'';
@@ -969,7 +975,7 @@ function renderDashboard() {
   }
 }
 
-// ââ INIT âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂ INIT Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 (function init() {
   const saved = localStorage.getItem('atlas_creds');
   if (saved) {
