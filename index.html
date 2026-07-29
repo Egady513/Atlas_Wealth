@@ -69,56 +69,6 @@
 <!-- NOTIFICATION -->
 <div id="notif" class="notif"></div>
 
-<!-- ── SCREEN: SETUP ── -->
-<div id="screen-setup" class="screen active" style="align-items:center;justify-content:center;padding:32px 20px">
-  <div style="max-width:480px;width:100%">
-    <div style="text-align:center;margin-bottom:32px">
-      <div style="width:56px;height:56px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 16px">📊</div>
-      <h1 style="font-size:26px;font-weight:700;margin-bottom:8px">Atlas Wealth Monitor</h1>
-      <p style="font-size:14px;color:#6b7280;line-height:1.6">Enter your credentials below. Everything is stored locally in your browser — never sent anywhere except directly to Supabase and Telegram.</p>
-    </div>
-
-    <div class="card" style="margin-bottom:14px">
-      <div class="label" style="color:#6366f1;margin-bottom:14px">Supabase — Required</div>
-      <div style="margin-bottom:12px">
-        <div style="font-size:12px;color:#9ca3af;margin-bottom:6px">Project URL</div>
-        <input id="sb-url" type="text" placeholder="https://xxxx.supabase.co"/>
-      </div>
-      <div style="margin-bottom:12px">
-        <div style="font-size:12px;color:#9ca3af;margin-bottom:6px">Anon Key</div>
-        <input id="sb-key" type="password" placeholder="eyJhbGci..."/>
-      </div>
-      <div style="margin-bottom:12px">
-        <div style="font-size:12px;color:#9ca3af;margin-bottom:6px">Anthropic API Key</div>
-        <input id="anthropic-key" type="password" placeholder="sk-ant-..."/>
-        <div style="font-size:11px;color:#4b5563;margin-top:5px">Get yours free at <a href="https://console.anthropic.com" target="_blank" style="color:#6366f1">console.anthropic.com</a> → API Keys</div>
-      </div>
-      <div style="background:#0d0d1e;border:0.5px solid #312e81;border-radius:8px;padding:10px 12px;font-size:12px;color:#a5b4fc;line-height:1.6">
-        💡 Run this in Supabase SQL Editor first:<br>
-        <code style="font-size:11px;color:#c4b5fd">create table portfolio_store (key text primary key, value jsonb, updated_at timestamptz default now());</code>
-      </div>
-    </div>
-
-    <div class="card" style="margin-bottom:20px">
-      <div class="label" style="color:#22c55e;margin-bottom:14px">Telegram — Optional but recommended</div>
-      <div style="margin-bottom:12px">
-        <div style="font-size:12px;color:#9ca3af;margin-bottom:6px">Bot Token (from @BotFather)</div>
-        <input id="tg-token" type="password" placeholder="123456789:AAF..."/>
-      </div>
-      <div style="margin-bottom:12px">
-        <div style="font-size:12px;color:#9ca3af;margin-bottom:6px">Chat ID</div>
-        <div style="display:flex;gap:8px">
-          <input id="tg-chatid" type="text" placeholder="Will be auto-detected" style="flex:1"/>
-          <button class="btn-secondary" onclick="findChatId()" id="find-chatid-btn" style="white-space:nowrap;font-size:12px">Find mine</button>
-        </div>
-        <div style="font-size:11px;color:#4b5563;margin-top:5px">First send any message to your bot in Telegram, then click "Find mine"</div>
-      </div>
-    </div>
-
-    <button class="btn-primary" onclick="saveSetup()" style="width:100%;font-size:15px;padding:14px">Connect & Start →</button>
-  </div>
-</div>
-
 <!-- ── SCREEN: UPLOAD ── -->
 <div id="screen-upload" class="screen" style="align-items:center;justify-content:center;padding:40px 20px">
   <div style="max-width:500px;width:100%;text-align:center">
@@ -131,7 +81,7 @@
       <div style="font-size:13px;color:#4b5563">or click to browse</div>
     </div>
     <input type="file" id="file-input" accept=".xls,.xlsx" style="display:none" onchange="handleFile(this.files[0])"/>
-    <button onclick="showScreen('screen-setup')" style="margin-top:16px;background:transparent;border:none;font-size:12px;color:#374151;cursor:pointer">← Change credentials</button>
+    <button onclick="showScreen('screen-dashboard');showTab('settings-tab')" style="margin-top:16px;background:transparent;border:none;font-size:12px;color:#374151;cursor:pointer">← Change credentials</button>
   </div>
 </div>
 
@@ -162,7 +112,7 @@
       <span id="critical-badge" style="display:none" class="badge badge-critical">0 critical</span>
       <button class="btn-secondary" onclick="reAnalyze()" id="btn-analyze" style="font-size:12px">Re-analyze</button>
       <button class="btn-secondary" onclick="runScan()" id="btn-scan" style="font-size:12px;color:#93c5fd;border-color:#1e3a5f">Market scan</button>
-      <button class="btn-primary" onclick="runFull()" id="btn-full" style="font-size:12px;padding:7px 16px" title="Runs both portfolio analysis + live market scan together">Full check �</button>
+      <button class="btn-primary" onclick="runFull()" id="btn-full" style="font-size:12px;padding:7px 16px" title="Runs both portfolio analysis + live market scan together">Full check ⚡</button>
       <button onclick="document.getElementById('file-input2').click()" style="background:transparent;border:0.5px solid #1f2937;border-radius:8px;padding:7px 13px;font-size:12px;color:#6b7280">Update portfolio</button>
     </div>
   </div>
@@ -513,22 +463,18 @@ const ACT_COLORS = { SELL:{bg:'#1a0808',text:'#fca5a5',border:'#7f1d1d',badge:'#
 const ALERT_COLORS = { critical:{bg:'#1a0808',border:'#7f1d1d',text:'#fca5a5',dot:'#ef4444'}, warning:{bg:'#1a1208',border:'#78350f',text:'#fcd34d',dot:'#f59e0b'}, info:{bg:'#08101a',border:'#1e3a5f',text:'#93c5fd',dot:'#3b82f6'} };
 const VERDICT_COLORS = {'strong-hold':'#22c55e','hold':'#22c55e','add':'#60a5fa','trim':'#f59e0b','sell':'#ef4444'};
 
-// ── SETUP / SETTINGS ───────────────────────────────────────────────────────
-function saveSetup() {
-  const sbUrl = document.getElementById('sb-url').value.trim();
-  const sbKey = document.getElementById('sb-key').value.trim();
-  if (!sbUrl || !sbKey) { showNotif('Supabase URL and key are required', 'error'); return; }
-  const anthropicKey = document.getElementById('anthropic-key').value.trim();
-  if (!anthropicKey) { showNotif('Anthropic API key is required', 'error'); return; }
-  CREDS = { sbUrl, sbKey, anthropicKey, tgToken: document.getElementById('tg-token').value.trim(), tgChatId: document.getElementById('tg-chatid').value.trim() };
-  localStorage.setItem('atlas_creds', JSON.stringify(CREDS));
-  loadFromSupabase();
-}
-
+// ── SETTINGS ───────────────────────────────────────────────────────
 function saveSettings() {
-  CREDS = { sbUrl: document.getElementById('s-sb-url').value.trim(), sbKey: document.getElementById('s-sb-key').value.trim(), anthropicKey: document.getElementById('s-anthropic-key').value.trim(), tgToken: document.getElementById('s-tg-token').value.trim(), tgChatId: document.getElementById('s-tg-chatid').value.trim() };
+  const sbUrl = document.getElementById('s-sb-url').value.trim();
+  const sbKey = document.getElementById('s-sb-key').value.trim();
+  const anthropicKey = document.getElementById('s-anthropic-key').value.trim();
+  if (!sbUrl || !sbKey) { showNotif('Supabase URL and key are required', 'error'); return; }
+  if (!anthropicKey) { showNotif('Anthropic API key is required', 'error'); return; }
+  const hadCreds = !!CREDS;
+  CREDS = { sbUrl, sbKey, anthropicKey, tgToken: document.getElementById('s-tg-token').value.trim(), tgChatId: document.getElementById('s-tg-chatid').value.trim() };
   localStorage.setItem('atlas_creds', JSON.stringify(CREDS));
   showNotif('Settings saved', 'success');
+  if (!hadCreds) loadFromSupabase();
 }
 
 function resetAll() {
@@ -913,16 +859,14 @@ function renderDashboard() {
 // ── INIT ───────────────────────────────────────────────────────────────────
 (function init() {
   const saved = localStorage.getItem('atlas_creds');
-  if (saved) {
-    CREDS = JSON.parse(saved);
-    // If old saved creds missing anthropic key, show setup again
-    if (!CREDS.anthropicKey) {
-      showScreen('screen-setup');
-    } else {
-      loadFromSupabase();
-    }
+  if (saved) CREDS = JSON.parse(saved);
+  if (CREDS && CREDS.sbUrl && CREDS.sbKey && CREDS.anthropicKey) {
+    loadFromSupabase();
   } else {
-    showScreen('screen-setup');
+    renderDashboard();
+    showScreen('screen-dashboard');
+    showTab('settings-tab');
+    setTimeout(() => showNotif('Add your Supabase + Anthropic credentials below to get started', 'info'), 500);
   }
 })();
 </script>
