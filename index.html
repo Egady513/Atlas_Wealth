@@ -282,11 +282,9 @@ ACCEPTANCE CRITERIA FOR THIS PORTFOLIO:
 - Beat S&P 500 by 3-5% annually
 - Minimize losses when market moves down — no huge swings on downturns
 
-CURRENT MACRO CONTEXT: Before forming any macro view, use live web search to check today's date, the current S&P 500 level and trend, which sectors are leading/lagging YTD, current Fed policy stance, and any major macro or geopolitical drivers. Ground every macro statement in what the search actually returns — never assume "current" conditions from training data or from a previous run.
+RULES: No generic retail advice. No index-only suggestions. No avoiding difficult criticism. Always prioritize alpha, risk-adjusted returns, long-term compounding. Never assume, invent, or recall from training data any "current" market conditions — index levels, sector leadership, Fed policy stance, macro or geopolitical drivers, or today's date. Ground every market-conditions statement only in data explicitly provided to you in this request (a CURRENT MARKET CONTEXT block, live search results, or the holdings data itself), and say so plainly when no current market data is available rather than guessing.`;
 
-RULES: No generic retail advice. No index-only suggestions. No avoiding difficult criticism. Always prioritize alpha, risk-adjusted returns, long-term compounding.`;
-
-const ANALYSIS_PROMPT = ANALYST_PERSONA + `\n\nAnalyze the portfolio. Return ONLY valid JSON, no markdown:\n{"score":<1-10>,"scoreAfterRebalance":<1-10>,"portfolioValue":<number>,"totalGainLoss":<number>,"totalGainLossPct":<number>,"techConcentration":<number>,"alerts":[{"level":"critical"|"warning"|"info","ticker":"<ticker>","title":"<short>","message":"<1-2 sentences>"}],"actionItems":[{"action":"SELL"|"BUY"|"TRIM"|"HOLD"|"ADD","ticker":"<ticker>","reason":"<concise>","urgency":"immediate"|"this-week"|"this-month","trimPct":<for TRIM/SELL: % of position to sell, e.g. 30>,"sizePct":<for BUY/ADD: % of total portfolio to allocate, e.g. 4>}],"sectorExposure":[{"sector":"<n>","pct":<number>,"status":"overweight"|"underweight"|"ok"}],"stressTests":[{"scenario":"<n>","currentImpact":"<e.g. -30% to -38%>","rebalancedImpact":"<e.g. -20%>"}],"strengths":["<s1>","<s2>","<s3>"],"weaknesses":["<w1>","<w2>","<w3>"],"topPositionAnalysis":[{"ticker":"<t>","verdict":"strong-hold"|"hold"|"trim"|"sell"|"add","note":"<one sentence>"}],"macroThesis":"<2-3 sentence market read for this portfolio>","telegramWorthy":<true|false>}`;
+const ANALYSIS_PROMPT = ANALYST_PERSONA + `\n\nYou are analyzing a specific portfolio snapshot. Treat any CURRENT MARKET CONTEXT block in the user message as your only source of "current" macro facts for this analysis — it comes from a separate live market scan. Do not substitute your own assumptions about where the market currently stands. If the user message states that no current market data is available, your macroThesis must say so explicitly instead of inventing macro conditions.\n\nAnalyze the portfolio. Return ONLY valid JSON, no markdown:\n{"score":<1-10>,"scoreAfterRebalance":<1-10>,"portfolioValue":<number>,"totalGainLoss":<number>,"totalGainLossPct":<number>,"techConcentration":<number>,"alerts":[{"level":"critical"|"warning"|"info","ticker":"<ticker>","title":"<short>","message":"<1-2 sentences>"}],"actionItems":[{"action":"SELL"|"BUY"|"TRIM"|"HOLD"|"ADD","ticker":"<ticker>","reason":"<concise>","urgency":"immediate"|"this-week"|"this-month","trimPct":<for TRIM/SELL: % of position to sell, e.g. 30>,"sizePct":<for BUY/ADD: % of total portfolio to allocate, e.g. 4>}],"sectorExposure":[{"sector":"<n>","pct":<number>,"status":"overweight"|"underweight"|"ok"}],"stressTests":[{"scenario":"<n>","currentImpact":"<e.g. -30% to -38%>","rebalancedImpact":"<e.g. -20%>"}],"strengths":["<s1>","<s2>","<s3>"],"weaknesses":["<w1>","<w2>","<w3>"],"topPositionAnalysis":[{"ticker":"<t>","verdict":"strong-hold"|"hold"|"trim"|"sell"|"add","note":"<one sentence>"}],"macroThesis":"<2-3 sentence market read for this portfolio>","telegramWorthy":<true|false>}`;
 
 const SCAN_PROMPT = ANALYST_PERSONA + `\n\nSearch the web for recent news and market data. Return ONLY valid JSON:\n{"marketSummary":"<2-3 sentences>","newsItems":[{"ticker":"<ticker or MARKET>","headline":"<actual headline>","summary":"<1-2 sentences>","impact":"bullish"|"bearish"|"neutral","severity":"critical"|"warning"|"info","recommendation":"<specific action>","telegramWorthy":<true|false>}],"sectorTrends":[{"sector":"<n>","trend":"up"|"down"|"sideways","note":"<one sentence>","action":"rotate-in"|"rotate-out"|"hold"}],"buyOpportunities":[{"ticker":"<ticker>","name":"<full name>","thesis":"<2-3 sentence buy thesis>","suggestedAllocation":"<% of portfolio>","urgency":"immediate"|"this-week"|"this-month","category":"<e.g. AI power, energy hedge>","telegramWorthy":<true|false>}],"rotationAlerts":[{"from":"<ticker>","to":"<ticker>","reason":"<why now>","telegramWorthy":<true|false>}],"topRisk":"<biggest risk>","topOpportunity":"<best opportunity>"}`;
 
@@ -340,6 +338,18 @@ async function sbSet(key, value) {
     return true;
   } catch { return false; }
 }
+// Fetch all rows whose key starts with `prefix` (e.g. 'snapshot_' or 'analysis_').
+// ISO8601 timestamps sort lexicographically, so ordering by key gives chronological order.
+async function sbList(prefix) {
+  try {
+    const likePattern = encodeURIComponent(prefix) + '*';
+    const r = await fetch(`${CREDS.sbUrl}/rest/v1/portfolio_store?key=like.${likePattern}&select=key,value,updated_at&order=key.asc`, {
+      headers: { apikey: CREDS.sbKey, Authorization: `Bearer ${CREDS.sbKey}` }
+    });
+    const d = await r.json();
+    return Array.isArray(d) ? d : [];
+  } catch { return []; }
+}
 
 // ── TELEGRAM ───────────────────────────────────────────────────────────────
 async function tgSend(msg) {
@@ -390,9 +400,15 @@ async function testTelegram() {
 }
 
 // ── CLAUDE API ─────────────────────────────────────────────────────────────
-async function callClaude(system, user, webSearch=false) {
-  const body = { model: 'claude-sonnet-4-20250514', max_tokens: 4000, system, messages: [{ role: 'user', content: user }] };
-  if (webSearch) body.tools = [{ type: 'web_search_20250305', name: 'web_search' }];
+async function callClaude(system, user, webSearch=false, model='claude-opus-5') {
+  // 16000 is the recommended ceiling for non-streaming requests (this is a raw
+  // fetch call, not the SDK's stream() helper). Both Opus 5 and Sonnet 5 run
+  // adaptive thinking by default when `thinking` is omitted, and max_tokens is
+  // a hard cap on thinking + response text together — the large JSON these
+  // prompts require needs that extra headroom. Do not raise this further
+  // without converting to a streaming request.
+  const body = { model, max_tokens: 16000, system, messages: [{ role: 'user', content: user }] };
+  if (webSearch) body.tools = [{ type: 'web_search_20260209', name: 'web_search' }];
   const r = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST', headers: {
       'Content-Type': 'application/json',
@@ -527,22 +543,64 @@ async function handleFile(file) {
     if (!holdings.length) throw new Error('No holdings found in file');
     setProgress(15, 'Saving to Supabase...');
     STATE.portfolio = { holdings, savedAt: Date.now(), filename: file.name };
+    // Keep writing the current snapshot to 'portfolio' for backward compatibility
+    // with the existing load path (loadFromSupabase reads this key).
     await sbSet('portfolio', STATE.portfolio);
-    setProgress(30, 'Running portfolio analysis...');
-    await doAnalysis(holdings);
-    setProgress(70, 'Running market scan...');
+    // ALSO write an immutable, timestamped snapshot so upload history is never
+    // overwritten — this is the raw material for benchmark tracking and
+    // recommendation scoring. ISO8601 sorts lexicographically, preserving order.
+    const snapshotTs = new Date().toISOString();
+    const portfolioValue = holdings.reduce((sum, h) => sum + (parseFloat(String(h.value||'0').replace(/[$,]/g,'')) || 0), 0);
+    await sbSet(`snapshot_${snapshotTs}`, { timestamp: snapshotTs, holdings, portfolioValue, filename: file.name });
+    setProgress(30, 'Running market scan...');
     await doScan(holdings);
+    setProgress(70, 'Running portfolio analysis...');
+    await doAnalysis(holdings);
     setProgress(100, 'Complete!');
     setTimeout(() => { renderDashboard(); showScreen('screen-dashboard'); }, 400);
   } catch(e) { showNotif(e.message, 'error'); showScreen('screen-dashboard'); }
 }
 
 // ── ANALYSIS ───────────────────────────────────────────────────────────────
+// Builds the CURRENT MARKET CONTEXT block fed to the analysis pass. The scan
+// pass (which has live web search) is the only source of "current" macro
+// truth — if no scan has been run yet, the analysis is told explicitly so it
+// doesn't invent market conditions.
+function getMarketContextBlock() {
+  const s = STATE.scan;
+  if (!s || !s.timestamp) {
+    return 'CURRENT MARKET CONTEXT: No market scan has been run yet, so no current market data is available for this analysis. Do not invent, assume, or recall from training data any "current" index levels, sector trends, Fed policy stance, or macro/geopolitical conditions — base your analysis strictly on the portfolio holdings data below, and say plainly in macroThesis that no current market data was available.';
+  }
+  const asOf = new Date(s.timestamp).toLocaleString('en-US', { month:'long', day:'numeric', year:'numeric', hour:'numeric', minute:'2-digit' });
+  const parts = [];
+  if (s.marketSummary) parts.push(`Market summary: ${s.marketSummary}`);
+  if (s.topRisk) parts.push(`Top risk: ${s.topRisk}`);
+  if (s.topOpportunity) parts.push(`Top opportunity: ${s.topOpportunity}`);
+  if (!parts.length) {
+    return `CURRENT MARKET CONTEXT: A market scan was run on ${asOf} but returned no usable macro summary. Do not invent current market conditions — base your analysis strictly on the portfolio holdings data below.`;
+  }
+  return `CURRENT MARKET CONTEXT (as of ${asOf}, from the most recent live market scan):\n${parts.join('\n')}\n\nThis is the most recent available snapshot and may be hours or days old by the time you read it — do not assume anything about market conditions beyond what is stated here plus what is in the holdings data.`;
+}
+
 async function doAnalysis(holdings) {
-  const result = await callClaude(ANALYSIS_PROMPT, `Analyze this JP Morgan Chase portfolio. Today's date: ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}. Search the web to confirm current market conditions before analyzing.\n\nHoldings:\n${JSON.stringify(holdings,null,2)}`, true);
+  const marketContext = getMarketContextBlock();
+  // No web_search here: Fix 1 (call-order reversal in handleFile/runFull) guarantees
+  // this analysis always runs after a fresh scan, so the CURRENT MARKET CONTEXT
+  // block above is genuinely the sole source of current macro facts. Passing the
+  // tool alongside that claim would let the model contradict its own instructions.
+  const result = await callClaude(ANALYSIS_PROMPT, `Analyze this JP Morgan Chase portfolio. Today's date: ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}.\n\n${marketContext}\n\nHoldings:\n${JSON.stringify(holdings,null,2)}`, false, 'claude-opus-5');
   result.timestamp = Date.now();
   STATE.analysis = result;
   await sbSet('last_analysis', result);
+
+  // Immutable point-in-time snapshot for later benchmark/recommendation scoring.
+  const analysisSnapshotTs = new Date(result.timestamp).toISOString();
+  await sbSet(`analysis_${analysisSnapshotTs}`, {
+    timestamp: analysisSnapshotTs,
+    score: result.score,
+    portfolioValue: result.portfolioValue,
+    actionItems: (result.actionItems||[]).map(item => ({ ticker: item.ticker, action: item.action, reason: item.reason }))
+  });
 
   const newAlerts = (result.alerts||[]).filter(a=>a.level!=='info').map(a=>({...a,timestamp:Date.now(),id:Math.random().toString(36).slice(2)}));
   if (newAlerts.length) {
@@ -565,7 +623,7 @@ async function doAnalysis(holdings) {
 
 async function doScan(holdings) {
   const tickers = holdings.map(h=>h.ticker).join(', ');
-  const result = await callClaude(SCAN_PROMPT, `Search for current news and market data. Portfolio: ${tickers}\n\nHoldings:\n${JSON.stringify(holdings.map(h=>({ticker:h.ticker,value:h.value,unrealizedGLPct:h.unrealizedGLPct})),null,2)}\n\nScan for: news on these holdings, sector rotation opportunities, new buy candidates (energy/healthcare/utilities/AI-adjacent), macro/political/geopolitical updates.`, true);
+  const result = await callClaude(SCAN_PROMPT, `Search for current news and market data. Portfolio: ${tickers}\n\nHoldings:\n${JSON.stringify(holdings.map(h=>({ticker:h.ticker,value:h.value,unrealizedGLPct:h.unrealizedGLPct})),null,2)}\n\nScan for: news on these holdings, sector rotation opportunities, new buy candidates (energy/healthcare/utilities/AI-adjacent), macro/political/geopolitical updates.`, true, 'claude-sonnet-5');
   result.timestamp = Date.now();
   STATE.scan = result;
   await sbSet('last_scan', result);
@@ -603,7 +661,7 @@ async function runScan() {
 async function runFull() {
   if (!STATE.portfolio) return;
   setBusy(true, 'full');
-  try { await doAnalysis(STATE.portfolio.holdings); await doScan(STATE.portfolio.holdings); renderDashboard(); showNotif('Full check complete', 'success'); }
+  try { await doScan(STATE.portfolio.holdings); await doAnalysis(STATE.portfolio.holdings); renderDashboard(); showNotif('Full check complete', 'success'); }
   catch(e) { showNotif('Failed: ' + e.message, 'error'); }
   setBusy(false, 'full');
 }
