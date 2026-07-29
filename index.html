@@ -284,7 +284,7 @@ ACCEPTANCE CRITERIA FOR THIS PORTFOLIO:
 
 RULES: No generic retail advice. No index-only suggestions. No avoiding difficult criticism. Always prioritize alpha, risk-adjusted returns, long-term compounding. Never assume, invent, or recall from training data any "current" market conditions — index levels, sector leadership, Fed policy stance, macro or geopolitical drivers, or today's date. Ground every market-conditions statement only in data explicitly provided to you in this request (a CURRENT MARKET CONTEXT block, live search results, or the holdings data itself), and say so plainly when no current market data is available rather than guessing.`;
 
-const ANALYSIS_PROMPT = ANALYST_PERSONA + `\n\nYou are analyzing a specific portfolio snapshot. Treat any CURRENT MARKET CONTEXT block in the user message as your only source of "current" macro facts for this analysis — it comes from a separate live market scan. Do not substitute your own assumptions about where the market currently stands. If the user message states that no current market data is available, your macroThesis must say so explicitly instead of inventing macro conditions.\n\nAnalyze the portfolio. Return ONLY valid JSON, no markdown:\n{"score":<1-10>,"scoreAfterRebalance":<1-10>,"portfolioValue":<number>,"totalGainLoss":<number>,"totalGainLossPct":<number>,"techConcentration":<number>,"alerts":[{"level":"critical"|"warning"|"info","ticker":"<ticker>","title":"<short>","message":"<1-2 sentences>"}],"actionItems":[{"action":"SELL"|"BUY"|"TRIM"|"HOLD"|"ADD","ticker":"<ticker>","reason":"<concise>","urgency":"immediate"|"this-week"|"this-month","trimPct":<for TRIM/SELL: % of position to sell, e.g. 30>,"sizePct":<for BUY/ADD: % of total portfolio to allocate, e.g. 4>}],"sectorExposure":[{"sector":"<n>","pct":<number>,"status":"overweight"|"underweight"|"ok"}],"stressTests":[{"scenario":"<n>","currentImpact":"<e.g. -30% to -38%>","rebalancedImpact":"<e.g. -20%>"}],"strengths":["<s1>","<s2>","<s3>"],"weaknesses":["<w1>","<w2>","<w3>"],"topPositionAnalysis":[{"ticker":"<t>","verdict":"strong-hold"|"hold"|"trim"|"sell"|"add","note":"<one sentence>"}],"macroThesis":"<2-3 sentence market read for this portfolio>","telegramWorthy":<true|false>}`;
+const ANALYSIS_PROMPT = ANALYST_PERSONA + `\n\nYou are analyzing a specific portfolio snapshot. Treat any CURRENT MARKET CONTEXT block in the user message as your only source of "current" macro facts for this analysis — it comes from a separate live market scan. Do not substitute your own assumptions about where the market currently stands. If the user message states that no current market data is available, your macroThesis must say so explicitly instead of inventing macro conditions.\n\nAnalyze the portfolio. Return ONLY valid JSON, no markdown:\n{"score":<1-10>,"scoreAfterRebalance":<1-10>,"techConcentration":<number>,"alerts":[{"level":"critical"|"warning"|"info","ticker":"<ticker>","title":"<short>","message":"<1-2 sentences>"}],"actionItems":[{"action":"SELL"|"BUY"|"TRIM"|"HOLD"|"ADD","ticker":"<ticker>","reason":"<concise>","urgency":"immediate"|"this-week"|"this-month","trimPct":<for TRIM/SELL: % of position to sell, e.g. 30>,"sizePct":<for BUY/ADD: % of total portfolio to allocate, e.g. 4>}],"sectorExposure":[{"sector":"<n>","pct":<number>,"status":"overweight"|"underweight"|"ok"}],"stressTests":[{"scenario":"<n>","currentImpact":"<e.g. -30% to -38%>","rebalancedImpact":"<e.g. -20%>"}],"strengths":["<s1>","<s2>","<s3>"],"weaknesses":["<w1>","<w2>","<w3>"],"topPositionAnalysis":[{"ticker":"<t>","verdict":"strong-hold"|"hold"|"trim"|"sell"|"add","note":"<one sentence>"}],"macroThesis":"<2-3 sentence market read for this portfolio>","telegramWorthy":<true|false>}`;
 
 const SCAN_PROMPT = ANALYST_PERSONA + `\n\nSearch the web for recent news and market data. Return ONLY valid JSON:\n{"marketSummary":"<2-3 sentences>","newsItems":[{"ticker":"<ticker or MARKET>","headline":"<actual headline>","summary":"<1-2 sentences>","impact":"bullish"|"bearish"|"neutral","severity":"critical"|"warning"|"info","recommendation":"<specific action>","telegramWorthy":<true|false>}],"sectorTrends":[{"sector":"<n>","trend":"up"|"down"|"sideways","note":"<one sentence>","action":"rotate-in"|"rotate-out"|"hold"}],"buyOpportunities":[{"ticker":"<ticker>","name":"<full name>","thesis":"<2-3 sentence buy thesis>","suggestedAllocation":"<% of portfolio>","urgency":"immediate"|"this-week"|"this-month","category":"<e.g. AI power, energy hedge>","telegramWorthy":<true|false>}],"rotationAlerts":[{"from":"<ticker>","to":"<ticker>","reason":"<why now>","telegramWorthy":<true|false>}],"topRisk":"<biggest risk>","topOpportunity":"<best opportunity>"}`;
 
@@ -461,6 +461,21 @@ function parseXLS(file) {
 // ── HELPERS ────────────────────────────────────────────────────────────────
 function fmtVal(n) { const v=parseFloat(String(n||0).replace(/[$,]/g,'')); return isNaN(v)?'—':'$'+Math.abs(v).toLocaleString(undefined,{maximumFractionDigits:0}); }
 function fmtPct(n) { const v=parseFloat(String(n||0).replace(/[%,]/g,'')); return isNaN(v)?'—':(v>=0?'+':'')+v.toFixed(1)+'%'; }
+// Pure arithmetic over the parsed holdings — no model involved. Reuses the same
+// $/,-stripping idiom as fmtVal/the rest of the codebase. Guards against
+// missing/malformed cost data so totalGainLossPct never comes out NaN/Infinity.
+function computePortfolioMetrics(holdings) {
+  const list = Array.isArray(holdings) ? holdings : [];
+  const clean = (v) => { const n = parseFloat(String(v||'0').replace(/[$,]/g,'')); return isNaN(n) ? 0 : n; };
+  let portfolioValue = 0, totalGainLoss = 0, costBasis = 0;
+  list.forEach(h => {
+    portfolioValue += clean(h.value);
+    totalGainLoss += clean(h.unrealizedGL);
+    costBasis += clean(h.cost);
+  });
+  const totalGainLossPct = costBasis ? (totalGainLoss / costBasis * 100) : 0;
+  return { portfolioValue, totalGainLoss, totalGainLossPct, costBasis };
+}
 function timeAgo(ts) { if(!ts)return'never'; const m=Math.floor((Date.now()-ts)/60000); if(m<1)return'just now'; if(m<60)return m+'m ago'; const h=Math.floor(m/60); if(h<24)return h+'h ago'; return Math.floor(h/24)+'d ago'; }
 function scoreColor(s) { return s>=7?'#22c55e':s>=5?'#f59e0b':'#ef4444'; }
 function scoreRing(score, label, size=80) {
@@ -584,12 +599,20 @@ function getMarketContextBlock() {
 
 async function doAnalysis(holdings) {
   const marketContext = getMarketContextBlock();
+  // Pure arithmetic — computed here, not asked of the model (see computePortfolioMetrics).
+  const metrics = computePortfolioMetrics(holdings);
+  const portfolioFactsBlock = `PORTFOLIO FACTS (computed from the uploaded positions file, not an estimate — treat as ground truth):\nPortfolio value: ${fmtVal(metrics.portfolioValue)}\nTotal unrealized gain/loss: ${metrics.totalGainLoss>=0?'+':'-'}${fmtVal(metrics.totalGainLoss)}\nTotal unrealized gain/loss %: ${fmtPct(metrics.totalGainLossPct)}`;
   // No web_search here: Fix 1 (call-order reversal in handleFile/runFull) guarantees
   // this analysis always runs after a fresh scan, so the CURRENT MARKET CONTEXT
   // block above is genuinely the sole source of current macro facts. Passing the
   // tool alongside that claim would let the model contradict its own instructions.
-  const result = await callClaude(ANALYSIS_PROMPT, `Analyze this JP Morgan Chase portfolio. Today's date: ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}.\n\n${marketContext}\n\nHoldings:\n${JSON.stringify(holdings,null,2)}`, false, 'claude-opus-5');
+  const result = await callClaude(ANALYSIS_PROMPT, `Analyze this JP Morgan Chase portfolio. Today's date: ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}.\n\n${marketContext}\n\n${portfolioFactsBlock}\n\nHoldings:\n${JSON.stringify(holdings,null,2)}`, false, 'claude-opus-5');
   result.timestamp = Date.now();
+  // The API no longer returns these (pure arithmetic, computed client-side above) —
+  // merge them in so STATE.analysis, renderDashboard, and the snapshot below all see them.
+  result.portfolioValue = metrics.portfolioValue;
+  result.totalGainLoss = metrics.totalGainLoss;
+  result.totalGainLossPct = metrics.totalGainLossPct;
   STATE.analysis = result;
   await sbSet('last_analysis', result);
 
