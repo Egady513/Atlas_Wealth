@@ -124,6 +124,7 @@
     <div class="metric-cell"><div class="metric-label">Total G/L</div><div class="metric-val" id="m-gl">—</div></div>
     <div class="metric-cell"><div class="metric-label">G/L %</div><div class="metric-val" id="m-glpct">—</div></div>
     <div class="metric-cell"><div class="metric-label">Tech %</div><div class="metric-val" id="m-tech">—</div></div>
+    <div class="metric-cell"><div class="metric-label">Top 5</div><div class="metric-val" id="m-top5">—</div></div>
     <div class="metric-cell"><div class="metric-label">Buy Signals</div><div class="metric-val" id="m-buys" style="color:#22c55e">—</div></div>
     <div class="metric-cell"><div class="metric-label">Critical Alerts</div><div class="metric-val" id="m-crit" style="color:#22c55e">0</div></div>
   </div>
@@ -132,6 +133,7 @@
   <div style="display:flex;border-bottom:0.5px solid #111118;overflow-x:auto;background:#07070c">
     <button class="tab-btn active" onclick="showTab('overview')">Overview</button>
     <button class="tab-btn" onclick="showTab('market')" id="tab-market">Market Scan</button>
+    <button class="tab-btn" onclick="showTab('inputchain')" id="tab-inputchain">Input Chain</button>
     <button class="tab-btn" onclick="showTab('news')" id="tab-news">News</button>
     <button class="tab-btn" onclick="showTab('alerts')" id="tab-alerts">Alerts</button>
     <button class="tab-btn" onclick="showTab('actions')" id="tab-actions">Actions</button>
@@ -163,6 +165,18 @@
           <div class="label">Market pulse</div>
           <div id="market-pulse"><p style="font-size:13px;color:#374151">Run market scan to populate.</p></div>
         </div>
+        <div class="card" id="sector-card" style="display:none;grid-column:1/-1">
+          <div class="label">Sector exposure <span style="color:#22c55e;font-size:10px;text-transform:none;letter-spacing:0">· measured, not estimated</span></div>
+          <div style="height:10px;border-radius:5px;overflow:hidden;display:flex;background:#07070c;margin:10px 0 12px"><div id="sector-bar" style="display:flex;width:100%;height:100%"></div></div>
+          <div id="sector-legend" style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px"></div>
+          <div id="sector-notes" style="font-size:12px;color:#6b7280;margin-bottom:6px"></div>
+          <div id="sector-coverage" style="font-size:11px;color:#4b5563;line-height:1.6"></div>
+          <div id="sector-assessment" style="display:none;margin-top:12px;padding-top:12px;border-top:0.5px solid #1f2937"></div>
+        </div>
+        <div class="card" id="policy-card" style="display:none;grid-column:1/-1">
+          <div class="label">Policy exposure <span style="color:#6b7280;font-size:10px;text-transform:none;letter-spacing:0">· which government levers would actually change these earnings</span></div>
+          <div id="policy-list" style="margin-top:10px"></div>
+        </div>
         <div class="card" id="macro-card" style="display:none;grid-column:1/-1">
           <div class="label">Analyst macro thesis</div>
           <p id="macro-thesis" style="font-size:14px;color:#9ca3af;line-height:1.8"></p>
@@ -187,6 +201,14 @@
         <div id="buy-opps-section"></div>
         <div id="scan-footer" style="font-size:11px;color:#374151;margin-top:16px"></div>
       </div>
+    </div>
+
+    <!-- INPUT CHAIN -->
+    <div class="tab-content" id="tab-inputchain-content">
+      <div style="background:#0a0a12;border:0.5px solid #1f2937;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:#6b7280;line-height:1.7">
+        Build-out themes traced <strong style="color:#9ca3af">upstream</strong> to the inputs they consume. Themes persist between scans, so the value is the trajectory — how long one has been tracked and how its maturity has moved. <strong style="color:#f59e0b">Consensus</strong> is a warning: by then the obvious ways to own it have usually repriced.
+      </div>
+      <div id="inputchain-list"></div>
     </div>
 
     <!-- NEWS -->
@@ -272,21 +294,73 @@
 <script>
 // ── STATE ──────────────────────────────────────────────────────────────────
 let CREDS = null;
-let STATE = { portfolio: null, analysis: null, scan: null, alertsHistory: [], checkLog: [] };
+let STATE = { portfolio: null, analysis: null, scan: null, alertsHistory: [], checkLog: [], trendRegister: [] };
 
-const ANALYST_PERSONA = `You are a top-tier hedge fund portfolio strategist with 20+ years experience managing multi-billion dollar portfolios. You blend Ray Dalio macro awareness, Stanley Druckenmiller conviction investing, and Howard Marks risk discipline.
+const ANALYST_PERSONA = `You are a disciplined portfolio analyst working for one person: an individual investor who reviews this portfolio roughly once a month and makes every decision himself. He is not asking you to trade. He is asking you to think alongside him and to be checkable.
 
-INVESTMENT PHILOSOPHY: Concentration beats over-diversification. Risk management matters more than prediction. Asymmetric opportunities drive outsized returns. Capital preservation during downturns is critical. Markets move in regimes.
+YOUR JOB, in priority order:
+1. Show him what he is not seeing in his own portfolio — concentration he hasn't noticed, positions he believes are diversified but which move together, risk he is carrying unintentionally, and second-order exposure he never chose.
+2. Make every claim checkable later. State what would prove you wrong.
+3. Tell him plainly when the correct answer is to do nothing.
 
-ACCEPTANCE CRITERIA FOR THIS PORTFOLIO:
-- Beat S&P 500 by 3-5% annually
-- Minimize losses when market moves down — no huge swings on downturns
+WHAT YOU ARE NOT: you are not a source of alpha and you must not perform being one. You have no proprietary data, no execution edge, and no way to verify a market-beating claim on any horizon this user will actually observe. Do not adopt the voice or persona of a famous investor. Do not manufacture confidence you don't have. Confident prose is the failure mode here, not the goal.
 
-RULES: No generic retail advice. No index-only suggestions. No avoiding difficult criticism. Always prioritize alpha, risk-adjusted returns, long-term compounding. Never assume, invent, or recall from training data any "current" market conditions — index levels, sector leadership, Fed policy stance, macro or geopolitical drivers, or today's date. Ground every market-conditions statement only in data explicitly provided to you in this request (a CURRENT MARKET CONTEXT block, live search results, or the holdings data itself), and say so plainly when no current market data is available rather than guessing.`;
+RISK FRAME: capital preservation during drawdowns is the binding CONSTRAINT. Long-term return is the OBJECTIVE, pursued only within that constraint. When the two conflict, the constraint wins — say so explicitly rather than splitting the difference silently. Diversification is the default; concentration has to be argued for case by case, never assumed superior.
 
-const ANALYSIS_PROMPT = ANALYST_PERSONA + `\n\nYou are analyzing a specific portfolio snapshot. Treat any CURRENT MARKET CONTEXT block in the user message as your only source of "current" macro facts for this analysis — it comes from a separate live market scan. Do not substitute your own assumptions about where the market currently stands. If the user message states that no current market data is available, your macroThesis must say so explicitly instead of inventing macro conditions.\n\nAnalyze the portfolio. Return ONLY valid JSON, no markdown:\n{"score":<1-10>,"scoreAfterRebalance":<1-10>,"techConcentration":<number>,"alerts":[{"level":"critical"|"warning"|"info","ticker":"<ticker>","title":"<short>","message":"<1-2 sentences>"}],"actionItems":[{"action":"SELL"|"BUY"|"TRIM"|"HOLD"|"ADD","ticker":"<ticker>","reason":"<concise>","urgency":"immediate"|"this-week"|"this-month","trimPct":<for TRIM/SELL: % of position to sell, e.g. 30>,"sizePct":<for BUY/ADD: % of total portfolio to allocate, e.g. 4>}],"sectorExposure":[{"sector":"<n>","pct":<number>,"status":"overweight"|"underweight"|"ok"}],"stressTests":[{"scenario":"<n>","currentImpact":"<e.g. -30% to -38%>","rebalancedImpact":"<e.g. -20%>"}],"strengths":["<s1>","<s2>","<s3>"],"weaknesses":["<w1>","<w2>","<w3>"],"topPositionAnalysis":[{"ticker":"<t>","verdict":"strong-hold"|"hold"|"trim"|"sell"|"add","note":"<one sentence>"}],"macroThesis":"<2-3 sentence market read for this portfolio>","telegramWorthy":<true|false>}`;
+RULES:
+- "HOLD everything, no action needed this month" is a valid and frequently correct conclusion. Return it whenever it is true. Never manufacture an action to look useful. An empty actionItems array is a legitimate, and sometimes the best, answer.
+- Never assume, invent, or recall from training data any "current" market conditions — index levels, sector leadership, Fed policy stance, macro or geopolitical drivers, who currently holds any office, what any public figure has recently said, or today's date. Ground every market-conditions statement only in data explicitly provided to you in this request (a CURRENT MARKET CONTEXT block, live search results, or the holdings data itself), and say so plainly when no current market data is available rather than guessing.
+- Do not avoid difficult criticism. If a position or the overall allocation is bad, say it directly.
+- Always distinguish what was MEASURED from what you ESTIMATED, and label which is which. Anything handed to you as a computed fact is measured; your own inference is an estimate.`;
 
-const SCAN_PROMPT = ANALYST_PERSONA + `\n\nSearch the web for recent news and market data. Return ONLY valid JSON:\n{"marketSummary":"<2-3 sentences>","newsItems":[{"ticker":"<ticker or MARKET>","headline":"<actual headline>","summary":"<1-2 sentences>","impact":"bullish"|"bearish"|"neutral","severity":"critical"|"warning"|"info","recommendation":"<specific action>","telegramWorthy":<true|false>}],"sectorTrends":[{"sector":"<n>","trend":"up"|"down"|"sideways","note":"<one sentence>","action":"rotate-in"|"rotate-out"|"hold"}],"buyOpportunities":[{"ticker":"<ticker>","name":"<full name>","thesis":"<2-3 sentence buy thesis>","suggestedAllocation":"<% of portfolio>","urgency":"immediate"|"this-week"|"this-month","category":"<e.g. AI power, energy hedge>","telegramWorthy":<true|false>}],"rotationAlerts":[{"from":"<ticker>","to":"<ticker>","reason":"<why now>","telegramWorthy":<true|false>}],"topRisk":"<biggest risk>","topOpportunity":"<best opportunity>"}`;
+const ANALYSIS_PROMPT = ANALYST_PERSONA + `\n\nYou are analyzing a specific portfolio snapshot. Treat any CURRENT MARKET CONTEXT block in the user message as your only source of "current" macro facts for this analysis — it comes from a separate live market scan. Do not substitute your own assumptions about where the market currently stands. If the user message states that no current market data is available, your macroThesis must say so explicitly instead of inventing macro conditions.
+
+MEASURED FACTS ARE HANDED TO YOU. The user message contains a PORTFOLIO FACTS block and a MEASURED SECTOR EXPOSURE block, both computed arithmetically from the positions file. Those numbers are ground truth — do not recompute, contradict, or restate them as your own estimates. Your job is to say what they MEAN. If the sector block reports unclassified holdings, treat that as a real gap in the data and flag it rather than guessing what those tickers are.
+
+POLICY EXPOSURE. For each meaningful holding, identify which government-policy transmission channels could change its actual cash flows: tariffs, export controls, interest-rate path, antitrust, federal procurement, drug pricing, energy policy, immigration/labor, or none. This is about mechanism, not headlines — the question is "if this policy changed, would this company's earnings change, and through what path", NOT "has anyone said anything about it lately." Only claim a channel where you can name the mechanism. Most holdings have one or two channels; some genuinely have none, and "none" is a valid answer.
+
+Return ONLY valid JSON, no markdown:
+{"score":<1-10>,"scoreAfterRebalance":<1-10>,"alerts":[{"level":"critical"|"warning"|"info","ticker":"<ticker>","title":"<short>","message":"<1-2 sentences>"}],"actionItems":[{"action":"SELL"|"BUY"|"TRIM"|"HOLD"|"ADD","ticker":"<ticker>","reason":"<concise>","urgency":"immediate"|"this-week"|"this-month","falsifier":"<what observable thing would show this call was wrong>","trimPct":<for TRIM/SELL: % of position to sell, e.g. 30>,"sizePct":<for BUY/ADD: % of total portfolio to allocate, e.g. 4>}],"sectorAssessment":{"verdict":"<1-2 sentences on what the MEASURED sector numbers mean for risk>","concerns":["<specific concentration or correlation concern>"]},"policyExposure":[{"ticker":"<ticker>","channels":["tariffs"|"export-controls"|"rate-path"|"antitrust"|"federal-procurement"|"drug-pricing"|"energy-policy"|"labor"],"mechanism":"<one sentence: how a change transmits to earnings>","direction":"helped-by-loosening"|"hurt-by-tightening"|"two-sided"}],"stressTests":[{"scenario":"<n>","currentImpact":"<e.g. -30% to -38%>","rebalancedImpact":"<e.g. -20%>"}],"strengths":["<s1>","<s2>","<s3>"],"weaknesses":["<w1>","<w2>","<w3>"],"topPositionAnalysis":[{"ticker":"<t>","verdict":"strong-hold"|"hold"|"trim"|"sell"|"add","note":"<one sentence>"}],"macroThesis":"<2-3 sentence market read for this portfolio>","telegramWorthy":<true|false>}
+
+actionItems MAY be an empty array. If the portfolio needs nothing this month, return [] and say why in sectorAssessment.verdict. Set telegramWorthy true ONLY for something that genuinely cannot wait until he next opens the app — a real, dated, position-specific risk. Routine rebalancing observations are not telegramWorthy.`;
+
+const SCAN_PROMPT = ANALYST_PERSONA + `\n\nSearch the web for recent news and market data. Every factual claim you make must trace to something you actually found in search, with a date. If you cannot source it, do not assert it.
+
+═══ PART 1: STATEMENTS BY INFLUENTIAL PEOPLE — CLASSIFY BY DURABILITY ═══
+
+When a public figure's statement shows up in your search (head of state, central bank official, regulator, agency head, or the CEO of a company large enough to move an index), you must classify what kind of statement it is, because the two kinds behave completely differently:
+
+- "policy-change" — it changes, or credibly commits to changing, actual rules: tariffs, export licences, procurement, antitrust posture, drug pricing, rate path, subsidies. This changes company cash flows. The repricing tends to STICK. This is signal.
+- "sentiment-only" — praise, criticism, prediction, pressure, or commentary that changes no rule. It moves price without changing cash flows and historically tends to mean-revert within days to weeks. This is usually NOISE.
+
+Say which one it is in the 'durability' field and be honest. A statement praising or attacking one company is almost always sentiment-only, however large the price move was. Do NOT recommend a portfolio action off a sentiment-only statement — for those, set recommendation to explicitly say no action is warranted and why. The user reviews this app about once a month; by the time he reads a sentiment-only move it is over, and acting on it late is the single most expensive mistake this tool could cause.
+
+═══ PART 2: INPUT CHAINS — WHAT THE BUILD-OUT CONSUMES ═══
+
+This is the most valuable thing you produce. Reason UPSTREAM, not sideways.
+
+The question is never "what's the news on this stock." It is: what are companies actually building and scaling right now, what physical and industrial INPUTS does that consume, which layer of that input chain is genuinely hard to substitute, and who supplies it. Robots and electric drivetrains need permanent magnets, which need specific rare-earth elements, which need refining capacity that is geographically concentrated. Data centres need power, transformers, switchgear, and cooling before they need anything else. That shape of reasoning — demand you can already observe, traced back to the input that constrains it — is the whole point.
+
+Rules that keep this honest:
+- Anchor on OBSERVABLE demand: announced capacity, capex guidance, order books, production targets, signed offtake agreements. Not projections, vibes, or narrative.
+- A layer only counts as a chokepoint if you can NAME what makes it hard to substitute — permitting time, refining concentration, qualification cycles, patents, capital intensity. If you can't name it, set chokepoint false and say the input is commoditised. Most inputs are commoditised. Saying so is the useful answer.
+- SURVIVORSHIP WARNING, state it every time it applies: the "sell shovels in a gold rush" idea is remembered through its winners. Suppliers face the same demand collapse as their customers when a build-out ends, usually with more leverage, more cyclicality and less pricing power. Always name the downside case in 'downsideCase'.
+- If a theme has reached 'consensus' maturity, say plainly that the obvious ways to own it have most likely already repriced, and that arriving now is late. Consensus is a WARNING, not a recommendation.
+- Distinguish how cleanly a company is exposed: 'pure-play' (this is most of what they do), 'significant' (a real segment), 'incidental' (a rounding error that gets talked about as if it mattered). Incidental exposure is the most common way this kind of thinking goes wrong.
+
+═══ PART 3: THEMES PERSIST — DO NOT CHASE NOVELTY ═══
+
+The user message contains an EXISTING TREND REGISTER. These are input-chain themes already being tracked. Build-outs play out over quarters and years, so the correct output most months is the SAME themes with updated evidence — not a fresh set.
+
+- If an existing theme is still live, RETURN IT AGAIN using its exact 'theme' string so it can be matched, with refreshed evidence and its current maturity.
+- Only mark maturity 'fading' or set 'invalidated' true when something specific happened. Say what.
+- Only introduce a NEW theme when your search genuinely surfaced a new build-out with observable demand behind it. Returning zero new themes is a good outcome. Never invent a theme to make this run feel productive.
+- Maturity should move over time: early → accelerating → consensus → fading. Moving a theme backwards needs a reason.
+
+Return ONLY valid JSON:
+{"marketSummary":"<2-3 sentences>","newsItems":[{"ticker":"<ticker or MARKET>","headline":"<actual headline>","summary":"<1-2 sentences>","impact":"bullish"|"bearish"|"neutral","severity":"critical"|"warning"|"info","durability":"policy-change"|"sentiment-only"|"company-fundamental"|"macro-data","speaker":"<name/role if this is a statement by a person, else empty>","recommendation":"<specific action, or an explicit statement that no action is warranted and why>","telegramWorthy":<true|false>}],"sectorTrends":[{"sector":"<n>","trend":"up"|"down"|"sideways","note":"<one sentence>","action":"rotate-in"|"rotate-out"|"hold"}],"inputChainThemes":[{"theme":"<short stable name for this build-out, reused verbatim across runs>","demandDrivers":["<observable, dated evidence of what is being built or scaled>"],"inputChain":[{"layer":"raw-material"|"refined-material"|"component"|"capital-equipment"|"infrastructure","input":"<the specific input>","whyRequired":"<the physical or technical reason it is needed>","chokepoint":<true|false>,"chokepointReason":"<what makes it hard to substitute, or empty if commoditised>"}],"publicWaysToOwnIt":[{"ticker":"<ticker>","layer":"<which layer above>","purity":"pure-play"|"significant"|"incidental","note":"<one sentence>"}],"userExposureToday":["<tickers the user ALREADY owns that sit anywhere on this chain — check the holdings list>"],"maturity":"early"|"accelerating"|"consensus"|"fading","consensusView":"<what the market already believes and has already priced>","downsideCase":"<what breaks this, and what happens to the suppliers when it does>","falsifier":"<the specific observable event that would show this theme is over or wrong>","invalidated":<true|false>,"sourceEvidence":"<the dated news or data from your search supporting this — no training-data recall>"}],"buyOpportunities":[{"ticker":"<ticker>","name":"<full name>","thesis":"<2-3 sentence buy thesis>","suggestedAllocation":"<% of portfolio>","urgency":"immediate"|"this-week"|"this-month","category":"<e.g. AI power, energy hedge>","linkedTheme":"<matching inputChainThemes theme name, or empty>","telegramWorthy":<true|false>}],"rotationAlerts":[{"from":"<ticker>","to":"<ticker>","reason":"<why now>","telegramWorthy":<true|false>}],"topRisk":"<biggest risk>","topOpportunity":"<best opportunity>"}
+
+Set telegramWorthy true ONLY for a dated, position-specific, policy-change-grade development. Never for sentiment-only statements, and never for a theme update.`;
 
 // ── SCREENS ────────────────────────────────────────────────────────────────
 function showScreen(id) {
@@ -476,6 +550,129 @@ function computePortfolioMetrics(holdings) {
   const totalGainLossPct = costBasis ? (totalGainLoss / costBasis * 100) : 0;
   return { portfolioValue, totalGainLoss, totalGainLossPct, costBasis };
 }
+// ── SECTOR MAP ─────────────────────────────────────────────────────────────
+// The Chase positions export has no sector field, so sector exposure used to be
+// guessed by the model and then rendered in the same styling as the measured
+// numbers. This map makes it arithmetic instead.
+//
+// GICS sector names. Deliberately conservative: only tickers whose sector is
+// unambiguous are listed. Anything absent lands in 'Unclassified' and is
+// reported as such — an honest gap beats a confident guess. Add tickers here as
+// they show up in the portfolio; SECTOR_COVERAGE in the UI tells you when it
+// matters.
+const SECTOR_MAP = {
+  // Information Technology
+  AAPL:'Information Technology', MSFT:'Information Technology', NVDA:'Information Technology',
+  AVGO:'Information Technology', AMD:'Information Technology', INTC:'Information Technology',
+  QCOM:'Information Technology', TXN:'Information Technology', MU:'Information Technology',
+  AMAT:'Information Technology', LRCX:'Information Technology', KLAC:'Information Technology',
+  ASML:'Information Technology', TSM:'Information Technology', ADI:'Information Technology',
+  NXPI:'Information Technology', MRVL:'Information Technology', ON:'Information Technology',
+  CRM:'Information Technology', ORCL:'Information Technology', ADBE:'Information Technology',
+  ACN:'Information Technology', IBM:'Information Technology', NOW:'Information Technology',
+  INTU:'Information Technology', PANW:'Information Technology', CRWD:'Information Technology',
+  SNOW:'Information Technology', DELL:'Information Technology', HPQ:'Information Technology',
+  ANET:'Information Technology', CSCO:'Information Technology', SMCI:'Information Technology',
+  APH:'Information Technology', GLW:'Information Technology', TER:'Information Technology',
+  // Communication Services
+  GOOGL:'Communication Services', GOOG:'Communication Services', META:'Communication Services',
+  NFLX:'Communication Services', DIS:'Communication Services', T:'Communication Services',
+  VZ:'Communication Services', TMUS:'Communication Services', CMCSA:'Communication Services',
+  // Consumer Discretionary
+  AMZN:'Consumer Discretionary', TSLA:'Consumer Discretionary', HD:'Consumer Discretionary',
+  MCD:'Consumer Discretionary', NKE:'Consumer Discretionary', SBUX:'Consumer Discretionary',
+  LOW:'Consumer Discretionary', TJX:'Consumer Discretionary', BKNG:'Consumer Discretionary',
+  GM:'Consumer Discretionary', F:'Consumer Discretionary', RIVN:'Consumer Discretionary',
+  // Consumer Staples
+  PG:'Consumer Staples', KO:'Consumer Staples', PEP:'Consumer Staples', COST:'Consumer Staples',
+  WMT:'Consumer Staples', PM:'Consumer Staples', MO:'Consumer Staples', MDLZ:'Consumer Staples',
+  CL:'Consumer Staples', TGT:'Consumer Staples', KHC:'Consumer Staples',
+  // Health Care
+  UNH:'Health Care', JNJ:'Health Care', LLY:'Health Care', ABBV:'Health Care', MRK:'Health Care',
+  PFE:'Health Care', TMO:'Health Care', ABT:'Health Care', DHR:'Health Care', AMGN:'Health Care',
+  BMY:'Health Care', CVS:'Health Care', MDT:'Health Care', ISRG:'Health Care', GILD:'Health Care',
+  VRTX:'Health Care', REGN:'Health Care', ZTS:'Health Care', SYK:'Health Care', BSX:'Health Care',
+  // Financials
+  BRKB:'Financials', 'BRK.B':'Financials', JPM:'Financials', BAC:'Financials', WFC:'Financials',
+  GS:'Financials', MS:'Financials', C:'Financials', SCHW:'Financials', BLK:'Financials',
+  AXP:'Financials', V:'Financials', MA:'Financials', PYPL:'Financials', SPGI:'Financials',
+  CB:'Financials', PGR:'Financials', MMC:'Financials', COF:'Financials', USB:'Financials',
+  // Industrials
+  GE:'Industrials', CAT:'Industrials', HON:'Industrials', UNP:'Industrials', BA:'Industrials',
+  RTX:'Industrials', LMT:'Industrials', DE:'Industrials', UPS:'Industrials', ETN:'Industrials',
+  EMR:'Industrials', ITW:'Industrials', MMM:'Industrials', GD:'Industrials', NOC:'Industrials',
+  PH:'Industrials', CMI:'Industrials', PWR:'Industrials', URI:'Industrials', FIX:'Industrials',
+  // Energy
+  XOM:'Energy', CVX:'Energy', COP:'Energy', SLB:'Energy', EOG:'Energy', PSX:'Energy',
+  MPC:'Energy', VLO:'Energy', OXY:'Energy', WMB:'Energy', KMI:'Energy', HAL:'Energy',
+  // Utilities
+  NEE:'Utilities', DUK:'Utilities', SO:'Utilities', D:'Utilities', AEP:'Utilities',
+  SRE:'Utilities', EXC:'Utilities', XEL:'Utilities', ED:'Utilities', CEG:'Utilities',
+  VST:'Utilities', NRG:'Utilities',
+  // Materials
+  LIN:'Materials', SHW:'Materials', APD:'Materials', ECL:'Materials', FCX:'Materials',
+  NEM:'Materials', NUE:'Materials', DOW:'Materials', DD:'Materials', ALB:'Materials',
+  MP:'Materials', CRS:'Materials', ATI:'Materials',
+  // Real Estate
+  PLD:'Real Estate', AMT:'Real Estate', EQIX:'Real Estate', CCI:'Real Estate', SPG:'Real Estate',
+  O:'Real Estate', PSA:'Real Estate', DLR:'Real Estate',
+  // Broad-market / multi-sector funds — NOT a sector, tracked separately so they
+  // don't get miscounted as concentration in any one sector.
+  SPY:'Diversified Fund', VOO:'Diversified Fund', IVV:'Diversified Fund', VTI:'Diversified Fund',
+  QQQ:'Diversified Fund', VUG:'Diversified Fund', VTV:'Diversified Fund', SCHD:'Diversified Fund',
+  VXUS:'Diversified Fund', VEA:'Diversified Fund', VWO:'Diversified Fund', IWM:'Diversified Fund',
+  DIA:'Diversified Fund', VYM:'Diversified Fund', VIG:'Diversified Fund', SPLG:'Diversified Fund',
+  // Fixed income / cash
+  BND:'Fixed Income', AGG:'Fixed Income', TLT:'Fixed Income', SHY:'Fixed Income',
+  BNDX:'Fixed Income', VCIT:'Fixed Income', MUB:'Fixed Income', SGOV:'Fixed Income',
+  BIL:'Fixed Income', VMFXX:'Cash', SPAXX:'Cash', CASH:'Cash'
+};
+
+// Sectors that are a single-sector equity bet. Diversified funds, bonds and cash
+// are excluded from concentration warnings on purpose — owning VOO is not a
+// sector bet and shouldn't be scored as one.
+const NON_SECTOR_BUCKETS = ['Diversified Fund','Fixed Income','Cash','Unclassified'];
+
+function sectorFor(ticker) {
+  if (!ticker) return 'Unclassified';
+  const t = String(ticker).trim().toUpperCase();
+  return SECTOR_MAP[t] || SECTOR_MAP[t.replace(/[.\-\s]/g,'')] || 'Unclassified';
+}
+
+// Measured sector exposure. Pure arithmetic over parsed holdings — no model.
+// Returns coverage explicitly so the UI can say how much of the portfolio the
+// map actually classified rather than implying 100%.
+function computeSectorExposure(holdings) {
+  const list = Array.isArray(holdings) ? holdings : [];
+  const clean = (v) => { const n = parseFloat(String(v||'0').replace(/[$,]/g,'')); return isNaN(n) ? 0 : n; };
+  const bySector = {};
+  const unclassified = [];
+  let total = 0, classifiedValue = 0;
+  list.forEach(h => {
+    const val = clean(h.value);
+    const sec = sectorFor(h.ticker);
+    total += val;
+    bySector[sec] = (bySector[sec] || 0) + val;
+    if (sec === 'Unclassified') { if (h.ticker) unclassified.push(h.ticker); }
+    else classifiedValue += val;
+  });
+  const sectors = Object.entries(bySector)
+    .map(([sector, value]) => ({ sector, value, pct: total ? (value/total*100) : 0 }))
+    .sort((a,b) => b.value - a.value);
+  const techPct = total ? ((bySector['Information Technology']||0) / total * 100) : 0;
+  // Top-5 single-position concentration — a better risk read than any sector
+  // number, and also pure arithmetic.
+  const top5Pct = total
+    ? list.map(h=>clean(h.value)).sort((a,b)=>b-a).slice(0,5).reduce((s,v)=>s+v,0) / total * 100
+    : 0;
+  const largestSector = sectors.find(s => !NON_SECTOR_BUCKETS.includes(s.sector)) || null;
+  return {
+    sectors, techPct, top5Pct, unclassified, largestSector,
+    coveragePct: total ? (classifiedValue/total*100) : 0,
+    totalValue: total
+  };
+}
+
 function timeAgo(ts) { if(!ts)return'never'; const m=Math.floor((Date.now()-ts)/60000); if(m<1)return'just now'; if(m<60)return m+'m ago'; const h=Math.floor(m/60); if(h<24)return h+'h ago'; return Math.floor(h/24)+'d ago'; }
 function scoreColor(s) { return s>=7?'#22c55e':s>=5?'#f59e0b':'#ef4444'; }
 function scoreRing(score, label, size=80) {
@@ -518,15 +715,16 @@ async function loadFromSupabase() {
   showScreen('screen-analyzing');
   setProgress(5, 'Connecting to Supabase...');
   try {
-    const [p, a, s, ah, cl] = await Promise.all([
+    const [p, a, s, ah, cl, tr] = await Promise.all([
       sbGet('portfolio'), sbGet('last_analysis'), sbGet('last_scan'),
-      sbGet('alerts_history'), sbGet('check_log')
+      sbGet('alerts_history'), sbGet('check_log'), sbGet('trend_register')
     ]);
     if (p) { STATE.portfolio = p; }
     if (a) { STATE.analysis = a; }
     if (s) { STATE.scan = s; }
     if (ah) STATE.alertsHistory = ah;
     if (cl) STATE.checkLog = cl;
+    if (Array.isArray(tr)) STATE.trendRegister = tr;
     setProgress(100, 'Done!');
     setTimeout(() => {
       // Always go to dashboard - upload screen is bypassed entirely
@@ -535,7 +733,7 @@ async function loadFromSupabase() {
       showScreen('screen-dashboard');
       // If we have creds but no portfolio, auto-prompt with a notification
       if (!STATE.portfolio) {
-        setTimeout(() => showNotif('No portfolio loaded yet  click "Update portfolio" to upload your Chase XLS', 'info'), 800);
+        setTimeout(() => showNotif('No portfolio loaded yet - click "Update portfolio" to upload your Chase XLS', 'info'), 800);
       }
     }, 300);
   } catch(e) {
@@ -591,10 +789,87 @@ function getMarketContextBlock() {
   if (s.marketSummary) parts.push(`Market summary: ${s.marketSummary}`);
   if (s.topRisk) parts.push(`Top risk: ${s.topRisk}`);
   if (s.topOpportunity) parts.push(`Top opportunity: ${s.topOpportunity}`);
+
+  // The scan pass is the only thing with live web search, so anything it found
+  // and this block drops is simply lost to the analysis. Previously only the
+  // three summary strings above were forwarded and every structured finding —
+  // news, sector trends, rotations, input-chain themes — was silently discarded.
+  const news = (s.newsItems||[]).filter(n=>n.severity==='critical'||n.severity==='warning').slice(0,10);
+  if (news.length) {
+    parts.push('\nMarket news found by the scan (durability classification included — sentiment-only items move price without changing cash flows and should not drive action):');
+    news.forEach(n => parts.push(`  · [${n.ticker||'MARKET'}] (${n.durability||'unclassified'}${n.speaker?`, ${n.speaker}`:''}) ${n.headline} — ${n.summary||''}`));
+  }
+  const trends = (s.sectorTrends||[]).slice(0,8);
+  if (trends.length) {
+    parts.push('\nSector trends from the scan:');
+    trends.forEach(t => parts.push(`  · ${t.sector}: ${t.trend} (${t.action}) — ${t.note||''}`));
+  }
+  const rots = (s.rotationAlerts||[]).slice(0,6);
+  if (rots.length) {
+    parts.push('\nRotation ideas from the scan:');
+    rots.forEach(r => parts.push(`  · ${r.from} → ${r.to}: ${r.reason||''}`));
+  }
+  const themes = (STATE.trendRegister||[]).filter(t=>!t.invalidated).slice(0,8);
+  if (themes.length) {
+    parts.push('\nTracked input-chain themes (persistent build-out themes and the upstream inputs they consume — use these to spot second-order exposure the user already holds without having chosen it, and note that a theme at "consensus" maturity is likely already priced):');
+    themes.forEach(t => {
+      const choke = (t.inputChain||[]).filter(l=>l.chokepoint).map(l=>l.input);
+      parts.push(`  · ${t.theme} [${t.maturity||'unknown'}, tracked since ${(t.firstSeen||'').slice(0,10)||'unknown'}]${choke.length?` — chokepoints: ${choke.join('; ')}`:' — no chokepoint identified'}${(t.userExposureToday||[]).length?` — user already holds: ${t.userExposureToday.join(', ')}`:''}`);
+    });
+  }
+
   if (!parts.length) {
     return `CURRENT MARKET CONTEXT: A market scan was run on ${asOf} but returned no usable macro summary. Do not invent current market conditions — base your analysis strictly on the portfolio holdings data below.`;
   }
   return `CURRENT MARKET CONTEXT (as of ${asOf}, from the most recent live market scan):\n${parts.join('\n')}\n\nThis is the most recent available snapshot and may be hours or days old by the time you read it — do not assume anything about market conditions beyond what is stated here plus what is in the holdings data.`;
+}
+
+// ── TREND REGISTER ─────────────────────────────────────────────────────────
+// Input-chain themes are meant to persist across runs so the user can watch a
+// build-out mature over months rather than being handed a fresh set of ideas
+// every time he opens the app. The model is told to return existing themes
+// verbatim; this merge is what makes that durable — firstSeen is never
+// overwritten, and maturity changes are appended to a history so the trajectory
+// is visible even though each scan only reports a point-in-time value.
+function themeKey(name) { return String(name||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim(); }
+
+function mergeTrendRegister(existing, incoming, scanTs) {
+  const nowIso = new Date(scanTs || Date.now()).toISOString();
+  const byKey = new Map();
+  (Array.isArray(existing) ? existing : []).forEach(t => { if (themeKey(t.theme)) byKey.set(themeKey(t.theme), { ...t }); });
+
+  (Array.isArray(incoming) ? incoming : []).forEach(inc => {
+    const k = themeKey(inc.theme);
+    if (!k) return;
+    const prev = byKey.get(k);
+    if (!prev) {
+      byKey.set(k, {
+        ...inc,
+        firstSeen: nowIso,
+        lastSeen: nowIso,
+        seenCount: 1,
+        maturityHistory: inc.maturity ? [{ maturity: inc.maturity, at: nowIso }] : []
+      });
+      return;
+    }
+    const history = Array.isArray(prev.maturityHistory) ? [...prev.maturityHistory] : [];
+    if (inc.maturity && inc.maturity !== prev.maturity) history.push({ maturity: inc.maturity, at: nowIso });
+    byKey.set(k, {
+      ...prev, ...inc,
+      theme: prev.theme,              // keep the original wording so the key stays stable
+      firstSeen: prev.firstSeen || nowIso,
+      lastSeen: nowIso,
+      seenCount: (prev.seenCount || 1) + 1,
+      maturityHistory: history
+    });
+  });
+
+  // Themes the scan didn't mention this run are kept (build-outs don't stop
+  // existing because one scan didn't surface them) but their staleness is
+  // visible via lastSeen. Invalidated themes sort last and are dropped past 40.
+  return Array.from(byKey.values())
+    .sort((a,b) => (a.invalidated?1:0) - (b.invalidated?1:0) || String(b.lastSeen||'').localeCompare(String(a.lastSeen||'')))
+    .slice(0, 40);
 }
 
 async function doAnalysis(holdings) {
@@ -602,17 +877,37 @@ async function doAnalysis(holdings) {
   // Pure arithmetic — computed here, not asked of the model (see computePortfolioMetrics).
   const metrics = computePortfolioMetrics(holdings);
   const portfolioFactsBlock = `PORTFOLIO FACTS (computed from the uploaded positions file, not an estimate — treat as ground truth):\nPortfolio value: ${fmtVal(metrics.portfolioValue)}\nTotal unrealized gain/loss: ${metrics.totalGainLoss>=0?'+':'-'}${fmtVal(metrics.totalGainLoss)}\nTotal unrealized gain/loss %: ${fmtPct(metrics.totalGainLossPct)}`;
+  // Sector exposure is now measured from a ticker→sector map rather than guessed
+  // by the model. Coverage is stated explicitly so an incomplete map reads as a
+  // known gap instead of a confident number.
+  const sec = computeSectorExposure(holdings);
+  const sectorBlock = `MEASURED SECTOR EXPOSURE (computed from a ticker→sector map, not an estimate — treat as ground truth):\n`
+    + sec.sectors.map(s => `  ${s.sector}: ${s.pct.toFixed(1)}% (${fmtVal(s.value)})`).join('\n')
+    + `\nInformation Technology (GICS, strict): ${sec.techPct.toFixed(1)}%`
+    + `\nTop 5 positions as % of portfolio: ${sec.top5Pct.toFixed(1)}%`
+    + `\nMap coverage: ${sec.coveragePct.toFixed(1)}% of portfolio value classified.`
+    + (sec.unclassified.length
+        ? `\nUNCLASSIFIED tickers (absent from the sector map — do NOT guess their sector; flag them so the user can add them): ${sec.unclassified.join(', ')}`
+        : `\nAll holdings classified.`);
   // No web_search here: Fix 1 (call-order reversal in handleFile/runFull) guarantees
   // this analysis always runs after a fresh scan, so the CURRENT MARKET CONTEXT
   // block above is genuinely the sole source of current macro facts. Passing the
   // tool alongside that claim would let the model contradict its own instructions.
-  const result = await callClaude(ANALYSIS_PROMPT, `Analyze this JP Morgan Chase portfolio. Today's date: ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}.\n\n${marketContext}\n\n${portfolioFactsBlock}\n\nHoldings:\n${JSON.stringify(holdings,null,2)}`, false, 'claude-opus-5');
+  const result = await callClaude(ANALYSIS_PROMPT, `Analyze this JP Morgan Chase portfolio. Today's date: ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}.\n\n${marketContext}\n\n${portfolioFactsBlock}\n\n${sectorBlock}\n\nHoldings:\n${JSON.stringify(holdings,null,2)}`, false, 'claude-opus-5');
   result.timestamp = Date.now();
   // The API no longer returns these (pure arithmetic, computed client-side above) —
   // merge them in so STATE.analysis, renderDashboard, and the snapshot below all see them.
   result.portfolioValue = metrics.portfolioValue;
   result.totalGainLoss = metrics.totalGainLoss;
   result.totalGainLossPct = metrics.totalGainLossPct;
+  // Sector numbers are measured now, not model output. Stored on the analysis so
+  // the dashboard reads one object, but kept under `measured*` names so nothing
+  // can confuse them with an estimate later.
+  result.measuredSectors = sec.sectors;
+  result.techConcentration = sec.techPct;
+  result.top5Pct = sec.top5Pct;
+  result.sectorCoveragePct = sec.coveragePct;
+  result.unclassifiedTickers = sec.unclassified;
   STATE.analysis = result;
   await sbSet('last_analysis', result);
 
@@ -646,10 +941,26 @@ async function doAnalysis(holdings) {
 
 async function doScan(holdings) {
   const tickers = holdings.map(h=>h.ticker).join(', ');
-  const result = await callClaude(SCAN_PROMPT, `Search for current news and market data. Portfolio: ${tickers}\n\nHoldings:\n${JSON.stringify(holdings.map(h=>({ticker:h.ticker,value:h.value,unrealizedGLPct:h.unrealizedGLPct})),null,2)}\n\nScan for: news on these holdings, sector rotation opportunities, new buy candidates (energy/healthcare/utilities/AI-adjacent), macro/political/geopolitical updates.`, true, 'claude-sonnet-5');
+  // The existing register goes IN so themes persist and get updated rather than
+  // reinvented each run. Only the fields the model needs to recognise and update
+  // a theme are sent — not the whole stored object.
+  const register = (STATE.trendRegister||[]).filter(t=>!t.invalidated).slice(0, 12).map(t => ({
+    theme: t.theme, maturity: t.maturity, falsifier: t.falsifier,
+    trackedSince: (t.firstSeen||'').slice(0,10), timesSeen: t.seenCount || 1,
+    chokepoints: (t.inputChain||[]).filter(l=>l.chokepoint).map(l=>l.input)
+  }));
+  const registerBlock = register.length
+    ? `EXISTING TREND REGISTER (${register.length} tracked input-chain themes — return the live ones again using their exact "theme" string with refreshed evidence; only add a genuinely new build-out):\n${JSON.stringify(register,null,2)}`
+    : `EXISTING TREND REGISTER: empty — this is the first scan, so establish an initial set of input-chain themes grounded in what your search actually finds. Quality over quantity; 2-4 well-evidenced themes beats a long speculative list.`;
+  const result = await callClaude(SCAN_PROMPT, `Search for current news and market data. Portfolio: ${tickers}\n\nHoldings:\n${JSON.stringify(holdings.map(h=>({ticker:h.ticker,value:h.value,unrealizedGLPct:h.unrealizedGLPct})),null,2)}\n\n${registerBlock}\n\nScan for: (1) news on these holdings, classified by durability; (2) statements by influential people that could change policy, separated from statements that only move sentiment; (3) input-chain themes — what is being built at scale, what upstream inputs it consumes, which layers are genuine chokepoints, and which of these holdings already sit on those chains without the user having chosen that exposure; (4) sector rotation; (5) buy candidates, linked to a theme where one applies. Do not restrict the search to any preset list of sectors — follow the demand and the inputs wherever they lead.`, true, 'claude-sonnet-5');
   result.timestamp = Date.now();
   STATE.scan = result;
   await sbSet('last_scan', result);
+
+  // Persist the merged register separately from the scan so it survives and
+  // accumulates across runs.
+  STATE.trendRegister = mergeTrendRegister(STATE.trendRegister, result.inputChainThemes, result.timestamp);
+  await sbSet('trend_register', STATE.trendRegister);
 
   const entry = { timestamp: Date.now(), type: 'scan', alertCount: (result.newsItems||[]).filter(n=>n.severity==='critical').length, marketSummary: (result.marketSummary||'').substring(0,80) };
   STATE.checkLog = [entry, ...STATE.checkLog].slice(0, 40);
@@ -705,6 +1016,109 @@ function setBusy(busy, type) {
   }
 }
 
+// A statement that changes a rule and a statement that only changes mood look
+// identical in a headline feed, and they behave completely differently. Labelling
+// them is the whole point — sentiment-only items are flagged as not actionable
+// right on the card, because acting on one late is this tool's worst failure mode.
+const DURABILITY_STYLE = {
+  'policy-change':      { label:'POLICY CHANGE', color:'#fca5a5', bg:'#1a0808', border:'#7f1d1d', title:'Changes actual rules, so it changes cash flows. This kind of repricing tends to stick.' },
+  'sentiment-only':     { label:'SENTIMENT ONLY', color:'#94a3b8', bg:'#0a0a12', border:'#374151', title:'Moves price without changing any rule or cash flow. Historically tends to mean-revert within days to weeks. Not a basis for action — especially not weeks later.' },
+  'company-fundamental':{ label:'FUNDAMENTAL',    color:'#93c5fd', bg:'#08101a', border:'#1e3a5f', title:'A change in the business itself — earnings, guidance, orders, management.' },
+  'macro-data':         { label:'MACRO DATA',     color:'#c4b5fd', bg:'#0f0a1a', border:'#4c1d95', title:'A released economic data point rather than an opinion about one.' }
+};
+function durabilityBadge(item) {
+  const d = DURABILITY_STYLE[item && item.durability];
+  if (!d) return '';
+  const who = item.speaker ? ` — ${String(item.speaker).replace(/"/g,'&quot;')}` : '';
+  return `<span title="${d.title}${who.replace(/"/g,'&quot;')}" style="font-size:9px;font-weight:700;color:${d.color};background:${d.bg};border:0.5px solid ${d.border};padding:2px 6px;border-radius:4px;letter-spacing:0.04em">${d.label}</span>`;
+}
+
+// ── INPUT CHAIN RENDER ─────────────────────────────────────────────────────
+// The persistent trend register. The point of this view is trajectory: how long a
+// theme has been tracked, how its maturity has moved, where the chokepoints are,
+// and which of these chains the user is already exposed to without having picked
+// that exposure. "Consensus" is styled as a warning, not an opportunity.
+const MATURITY_STYLE = {
+  early:        { color:'#60a5fa', bg:'#08101a', border:'#1e3a5f', note:'Early — thin evidence, wide error bars' },
+  accelerating: { color:'#22c55e', bg:'#081a0e', border:'#14532d', note:'Accelerating — demand is showing up in real numbers' },
+  consensus:    { color:'#f59e0b', bg:'#1a1208', border:'#78350f', note:'Consensus — likely already priced. Arriving now is late.' },
+  fading:       { color:'#6b7280', bg:'#0a0a12', border:'#1f2937', note:'Fading — the build-out is slowing or over' }
+};
+const LAYER_LABEL = { 'raw-material':'Raw', 'refined-material':'Refined', 'component':'Component', 'capital-equipment':'Equipment', 'infrastructure':'Infrastructure' };
+
+function renderInputChain() {
+  const reg = STATE.trendRegister || [];
+  const live = reg.filter(t => !t.invalidated);
+  const el = document.getElementById('inputchain-list');
+  if (!el) return;
+  document.getElementById('tab-inputchain').textContent = 'Input Chain' + (live.length ? ` (${live.length})` : '');
+
+  if (!reg.length) {
+    el.innerHTML = `<div style="text-align:center;padding:48px 24px">
+      <div style="font-size:36px;margin-bottom:12px">⛓️</div>
+      <p style="font-size:15px;color:#6b7280;margin-bottom:8px">No themes tracked yet</p>
+      <p style="font-size:13px;color:#374151;max-width:520px;margin:0 auto 20px;line-height:1.7">Run a market scan. This tab tracks build-out themes and the upstream inputs they consume — what's being built, which material or component actually constrains it, and who supplies that. Themes persist between runs so you can watch one mature instead of getting a fresh list every month.</p>
+      <button class="btn-primary" onclick="runScan()">Run market scan</button>
+    </div>`;
+    return;
+  }
+
+  const owned = new Set((STATE.portfolio?.holdings||[]).map(h=>String(h.ticker||'').toUpperCase()));
+
+  el.innerHTML = reg.map(t => {
+    const ms = MATURITY_STYLE[t.maturity] || MATURITY_STYLE.early;
+    const chain = t.inputChain || [];
+    const chokepoints = chain.filter(l=>l.chokepoint);
+    const trackedDays = t.firstSeen ? Math.floor((Date.now() - new Date(t.firstSeen).getTime())/86400000) : null;
+    const history = (t.maturityHistory||[]).map(h=>h.maturity);
+    const trajectory = history.length > 1 ? history.join(' → ') : null;
+    // Cross-reference the chain against what he actually owns, computed here rather
+    // than trusting the model's userExposureToday field.
+    const heldOnChain = (t.publicWaysToOwnIt||[]).filter(w => owned.has(String(w.ticker||'').toUpperCase()));
+
+    return `<div style="background:#0a0a12;border:0.5px solid ${t.invalidated?'#1f2937':ms.border};border-radius:14px;padding:18px;margin-bottom:14px;${t.invalidated?'opacity:0.5':''}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:4px">
+        <div style="font-size:16px;font-weight:600;color:#f9fafb;flex:1;min-width:200px">${t.theme}</div>
+        <span style="font-size:11px;font-weight:700;color:${ms.color};background:${ms.bg};border:0.5px solid ${ms.border};padding:3px 10px;border-radius:5px;text-transform:uppercase;letter-spacing:0.04em">${t.invalidated?'invalidated':(t.maturity||'unknown')}</span>
+      </div>
+      <div style="font-size:11px;color:#4b5563;margin-bottom:10px">
+        ${trackedDays!==null?`tracked ${trackedDays}d · `:''}seen in ${t.seenCount||1} scan${(t.seenCount||1)>1?'s':''}${t.lastSeen?` · last confirmed ${timeAgo(new Date(t.lastSeen).getTime())}`:''}${trajectory?` · ${trajectory}`:''}
+      </div>
+      ${t.maturity==='consensus'?`<div style="background:#1a1208;border:0.5px solid #78350f;border-radius:8px;padding:8px 12px;font-size:12px;color:#fcd34d;margin-bottom:12px">⚠ ${ms.note}</div>`:''}
+
+      ${(t.demandDrivers||[]).length?`<div style="margin-bottom:12px"><div style="font-size:10px;color:#4b5563;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px">Demand you can observe</div>${(t.demandDrivers||[]).map(d=>`<div style="font-size:13px;color:#9ca3af;line-height:1.6">· ${d}</div>`).join('')}</div>`:''}
+
+      ${chain.length?`<div style="margin-bottom:12px">
+        <div style="font-size:10px;color:#4b5563;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">Input chain — upstream of the demand</div>
+        ${chain.map(l=>`<div style="display:flex;gap:9px;align-items:flex-start;padding:7px 10px;background:${l.chokepoint?'#12100a':'#07070c'};border:0.5px solid ${l.chokepoint?'#78350f':'#111118'};border-radius:8px;margin-bottom:5px">
+          <span style="font-size:9px;color:#6b7280;text-transform:uppercase;background:#111118;padding:2px 6px;border-radius:3px;flex-shrink:0;margin-top:1px">${LAYER_LABEL[l.layer]||l.layer||'?'}</span>
+          <div style="flex:1">
+            <div style="font-size:13px;color:#e5e7eb;font-weight:500">${l.input}${l.chokepoint?' <span style="color:#f59e0b;font-size:11px;font-weight:600">⛔ chokepoint</span>':' <span style="color:#4b5563;font-size:11px">commoditised</span>'}</div>
+            <div style="font-size:12px;color:#6b7280;line-height:1.5">${l.whyRequired||''}</div>
+            ${l.chokepoint&&l.chokepointReason?`<div style="font-size:12px;color:#fcd34d;line-height:1.5;margin-top:2px">Hard to substitute: ${l.chokepointReason}</div>`:''}
+          </div>
+        </div>`).join('')}
+      </div>`:''}
+
+      ${(t.publicWaysToOwnIt||[]).length?`<div style="margin-bottom:12px">
+        <div style="font-size:10px;color:#4b5563;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px">Public ways to own it</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">${(t.publicWaysToOwnIt||[]).map(w=>{
+          const pc = w.purity==='pure-play'?'#22c55e':w.purity==='significant'?'#f59e0b':'#6b7280';
+          const held = owned.has(String(w.ticker||'').toUpperCase());
+          return `<span title="${(w.note||'').replace(/"/g,'&quot;')}" style="font-size:12px;background:#07070c;border:0.5px solid ${held?'#14532d':'#1f2937'};border-radius:6px;padding:4px 9px"><span style="color:#e5e7eb;font-weight:600">${w.ticker}</span> <span style="color:${pc};font-size:10px">${w.purity||''}</span>${held?' <span style="color:#22c55e;font-size:10px">✓ held</span>':''}</span>`;
+        }).join('')}</div>
+      </div>`:''}
+
+      ${heldOnChain.length?`<div style="background:#081a0e;border:0.5px solid #14532d;border-radius:8px;padding:9px 12px;font-size:12px;color:#86efac;margin-bottom:10px">You already sit on this chain via <strong>${heldOnChain.map(w=>w.ticker).join(', ')}</strong> — exposure you may not have chosen deliberately.</div>`:''}
+
+      ${t.consensusView?`<div style="font-size:12px;color:#6b7280;line-height:1.6;margin-bottom:6px"><span style="color:#4b5563;text-transform:uppercase;font-size:10px;letter-spacing:0.06em">Already priced in</span><br>${t.consensusView}</div>`:''}
+      ${t.downsideCase?`<div style="font-size:12px;color:#fca5a5;line-height:1.6;margin-bottom:6px"><span style="color:#7f1d1d;text-transform:uppercase;font-size:10px;letter-spacing:0.06em">Downside case</span><br>${t.downsideCase}</div>`:''}
+      ${t.falsifier?`<div style="font-size:12px;color:#9ca3af;line-height:1.6;border-left:2px solid #374151;padding-left:9px;margin-bottom:6px"><span style="color:#4b5563;text-transform:uppercase;font-size:10px;letter-spacing:0.06em">Wrong if</span><br>${t.falsifier}</div>`:''}
+      ${t.sourceEvidence?`<div style="font-size:11px;color:#374151;line-height:1.5;margin-top:8px">Source: ${t.sourceEvidence}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
 // ── RENDER ─────────────────────────────────────────────────────────────────
 function renderDashboard() {
   const a = STATE.analysis || {};
@@ -723,14 +1137,19 @@ function renderDashboard() {
   // Metrics
   const glNum = parseFloat(String(a.totalGainLoss||0).replace(/[$,]/g,''));
   const glPct = parseFloat(String(a.totalGainLossPct||0).replace(/[%,]/g,''));
-  const techNum = parseFloat(String(a.techConcentration||0));
   document.getElementById('m-value').textContent = fmtVal(a.portfolioValue);
   document.getElementById('m-gl').style.color = glNum>=0?'#22c55e':'#ef4444';
   document.getElementById('m-gl').textContent = (glNum>=0?'+':'') + fmtVal(Math.abs(glNum));
   document.getElementById('m-glpct').style.color = glPct>=0?'#22c55e':'#ef4444';
   document.getElementById('m-glpct').textContent = fmtPct(glPct);
-  document.getElementById('m-tech').style.color = techNum>50?'#ef4444':techNum>35?'#f59e0b':'#22c55e';
-  document.getElementById('m-tech').textContent = techNum.toFixed(0)+'%';
+  // Live sector math from the current holdings, so the strip is right even before
+  // an analysis has been run. Measured, not estimated.
+  const liveSec = computeSectorExposure(p.holdings||[]);
+  document.getElementById('m-tech').textContent = liveSec.techPct.toFixed(0)+'%';
+  document.getElementById('m-tech').style.color = liveSec.techPct>50?'#ef4444':liveSec.techPct>35?'#f59e0b':'#22c55e';
+  document.getElementById('m-tech').title = `GICS Information Technology only — strict. Megacap names many people call "tech" sit in other sectors (Alphabet/Meta in Communication Services, Amazon/Tesla in Consumer Discretionary). Sector map covers ${liveSec.coveragePct.toFixed(0)}% of portfolio value.`;
+  document.getElementById('m-top5').textContent = liveSec.top5Pct ? liveSec.top5Pct.toFixed(0)+'%' : '—';
+  document.getElementById('m-top5').style.color = liveSec.top5Pct>60?'#ef4444':liveSec.top5Pct>45?'#f59e0b':'#22c55e';
   document.getElementById('m-buys').textContent = buyOpps.length||'0';
   document.getElementById('m-crit').style.color = critCount>0?'#ef4444':'#22c55e';
   document.getElementById('m-crit').textContent = critCount||'0';
@@ -767,6 +1186,66 @@ function renderDashboard() {
     document.getElementById('macro-card').style.display='block';
     document.getElementById('macro-thesis').textContent = a.macroThesis;
   }
+
+  // ── MEASURED SECTOR EXPOSURE ──
+  // Rendered from arithmetic, and visibly labelled as measured so it doesn't read
+  // like the model's opinion. Coverage gaps are shown, not hidden.
+  const SECTOR_COLORS = ['#60a5fa','#a78bfa','#f472b6','#fb923c','#facc15','#4ade80','#2dd4bf','#94a3b8','#f87171','#c084fc','#38bdf8'];
+  if ((p.holdings||[]).length) {
+    document.getElementById('sector-card').style.display='block';
+    const bars = liveSec.sectors.filter(s=>s.pct>=0.05);
+    document.getElementById('sector-bar').innerHTML = bars.map((s,i)=>
+      `<div title="${s.sector}: ${s.pct.toFixed(1)}%" style="width:${s.pct}%;background:${s.sector==='Unclassified'?'#374151':SECTOR_COLORS[i%SECTOR_COLORS.length]};height:100%"></div>`
+    ).join('');
+    document.getElementById('sector-legend').innerHTML = bars.map((s,i)=>
+      `<div style="display:flex;align-items:center;gap:6px;font-size:12px"><span style="width:8px;height:8px;border-radius:2px;background:${s.sector==='Unclassified'?'#374151':SECTOR_COLORS[i%SECTOR_COLORS.length]};flex-shrink:0"></span><span style="color:#9ca3af">${s.sector}</span><span style="color:#e5e7eb;font-weight:600">${s.pct.toFixed(1)}%</span></div>`
+    ).join('');
+    const notes = [];
+    notes.push(`Top 5 positions = <strong style="color:#e5e7eb">${liveSec.top5Pct.toFixed(1)}%</strong> of portfolio`);
+    if (liveSec.largestSector) notes.push(`Largest single sector: <strong style="color:#e5e7eb">${liveSec.largestSector.sector} ${liveSec.largestSector.pct.toFixed(1)}%</strong>`);
+    document.getElementById('sector-notes').innerHTML = notes.join(' · ');
+    document.getElementById('sector-coverage').innerHTML = liveSec.unclassified.length
+      ? `<span style="color:#f59e0b">⚠ ${liveSec.coveragePct.toFixed(0)}% of value classified.</span> Not in the sector map: <span style="color:#9ca3af">${liveSec.unclassified.join(', ')}</span>. These are excluded from the sector figures rather than guessed — add them to <code style="color:#6b7280">SECTOR_MAP</code> to include them.`
+      : `<span style="color:#22c55e">✓ All holdings classified.</span> Measured from the positions file, not estimated.`;
+    // The model's read ON the measured numbers, kept visually separate from the
+    // numbers themselves so the measured/interpreted line stays legible. Without
+    // this the schema field would be dead weight — the same mistake the old
+    // model-generated `sectorExposure` made, which was in the schema and never
+    // rendered anywhere.
+    const sa = a.sectorAssessment;
+    const saEl = document.getElementById('sector-assessment');
+    if (sa && (sa.verdict || (sa.concerns||[]).length)) {
+      saEl.style.display = 'block';
+      saEl.innerHTML = `<div style="font-size:10px;color:#4b5563;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px">Analyst read on the numbers above · interpretation, not measurement</div>`
+        + (sa.verdict ? `<div style="font-size:13px;color:#9ca3af;line-height:1.6">${sa.verdict}</div>` : '')
+        + ((sa.concerns||[]).length ? `<div style="margin-top:6px">${sa.concerns.map(c=>`<div style="font-size:12px;color:#fcd34d;line-height:1.6">⚠ ${c}</div>`).join('')}</div>` : '');
+    } else {
+      saEl.style.display = 'none';
+    }
+  }
+
+  // ── POLICY EXPOSURE ──
+  const polEx = a.policyExposure||[];
+  if (polEx.length) {
+    document.getElementById('policy-card').style.display='block';
+    const CHANNEL_LABEL = { 'tariffs':'Tariffs','export-controls':'Export controls','rate-path':'Rate path','antitrust':'Antitrust','federal-procurement':'Federal procurement','drug-pricing':'Drug pricing','energy-policy':'Energy policy','labor':'Labor/immigration' };
+    // Group by channel — the useful view is "how much of the portfolio rides on
+    // this one policy lever", not a per-ticker list.
+    const byChannel = {};
+    polEx.forEach(pe => (pe.channels||[]).forEach(ch => { (byChannel[ch] = byChannel[ch] || []).push(pe); }));
+    const ordered = Object.entries(byChannel).sort((a,b)=>b[1].length-a[1].length);
+    document.getElementById('policy-list').innerHTML = ordered.length ? ordered.map(([ch, items]) => `
+      <div style="margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <span style="font-size:12px;font-weight:600;color:#93c5fd;background:#08101a;border:0.5px solid #1e3a5f;padding:2px 9px;border-radius:5px">${CHANNEL_LABEL[ch]||ch}</span>
+          <span style="font-size:11px;color:#4b5563">${items.length} position${items.length>1?'s':''}</span>
+        </div>
+        ${items.map(pe=>`<div style="font-size:12px;color:#6b7280;padding-left:4px;margin-bottom:3px"><span style="color:#e5e7eb;font-weight:600">${pe.ticker}</span> — ${pe.mechanism||''}${pe.direction?` <span style="color:#4b5563">(${pe.direction.replace(/-/g,' ')})</span>`:''}</div>`).join('')}
+      </div>`).join('') : '';
+  }
+
+  // ── INPUT CHAIN ──
+  renderInputChain();
 
   if (buyOpps.length) {
     document.getElementById('buy-opps-overview').style.display='block';
@@ -822,7 +1301,7 @@ function renderDashboard() {
         <div style="flex:1">
           <div style="display:flex;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:6px">
             <span style="font-size:11px;font-weight:700;color:${c.text};background:rgba(0,0,0,0.2);padding:2px 8px;border-radius:4px">${item.ticker}</span>
-            <div style="display:flex;gap:8px;align-items:center"><span style="font-size:11px;color:${ic};text-transform:uppercase">${item.impact}</span>${item.telegramWorthy?'<span style="font-size:10px;color:#f59e0b">📱</span>':''}</div>
+            <div style="display:flex;gap:8px;align-items:center">${durabilityBadge(item)}<span style="font-size:11px;color:${ic};text-transform:uppercase">${item.impact}</span>${item.telegramWorthy?'<span style="font-size:10px;color:#f59e0b">📱</span>':''}</div>
           </div>
           <div style="font-size:14px;font-weight:500;color:#e5e7eb;margin-bottom:4px">${item.headline}</div>
           <div style="font-size:13px;color:#9ca3af;line-height:1.6;margin-bottom:${item.recommendation?'8px':'0'}">${item.summary}</div>
@@ -862,37 +1341,59 @@ function renderDashboard() {
       const c=ACT_COLORS[item.action]||ACT_COLORS.HOLD;
       const pos = (STATE.portfolio?.holdings||[]).find(h=>h.ticker===item.ticker);
       const posVal = pos ? parseFloat(pos.value.replace(/[$,]/g,'')) : 0;
-      const totalVal = parseFloat(String(STATE.analysis?.portfolioValue||0).replace(/[$,]/g,'')) || 55000;
+      // No fallback portfolio value. There used to be a hardcoded 55000 here, which
+      // meant a missing value silently produced dollar figures computed off a
+      // portfolio that doesn't exist. If the value isn't known, show the percentage
+      // and say the dollar amount is unavailable.
+      const totalVal = parseFloat(String(STATE.analysis?.portfolioValue||0).replace(/[$,]/g,'')) || 0;
       let amtLine = '';
       if ((item.action==='TRIM'||item.action==='SELL') && item.trimPct && posVal) {
         const dollarAmt = (posVal * item.trimPct / 100).toFixed(0);
-        amtLine = `<div style="font-size:12px;color:#fcd34d;margin-top:4px;font-weight:600">Sell ${item.trimPct}% of position = ~${Number(dollarAmt).toLocaleString()}</div>`;
+        amtLine = `<div style="font-size:12px;color:#fcd34d;margin-top:4px;font-weight:600">Sell ${item.trimPct}% of position = ~$${Number(dollarAmt).toLocaleString()}</div>`;
       } else if ((item.action==='BUY'||item.action==='ADD') && item.sizePct) {
-        const dollarAmt = (totalVal * item.sizePct / 100).toFixed(0);
-        amtLine = `<div style="font-size:12px;color:#86efac;margin-top:4px;font-weight:600">Allocate ${item.sizePct}% of portfolio = ~${Number(dollarAmt).toLocaleString()}</div>`;
+        amtLine = totalVal
+          ? `<div style="font-size:12px;color:#86efac;margin-top:4px;font-weight:600">Allocate ${item.sizePct}% of portfolio = ~$${Number((totalVal * item.sizePct / 100).toFixed(0)).toLocaleString()}</div>`
+          : `<div style="font-size:12px;color:#6b7280;margin-top:4px">Allocate ${item.sizePct}% of portfolio (run an analysis for the dollar amount)</div>`;
       }
+      const falsLine = item.falsifier
+        ? `<div style="font-size:11px;color:#6b7280;margin-top:6px;border-left:2px solid #374151;padding-left:8px"><span style="color:#4b5563;text-transform:uppercase;font-size:10px;letter-spacing:0.06em">Wrong if</span> ${item.falsifier}</div>`
+        : '';
       return `<div style="background:${c.bg};border:0.5px solid ${c.border};border-radius:10px;padding:12px 16px;display:flex;gap:12px;align-items:flex-start;margin-bottom:8px">
         <span style="background:${c.badge};color:white;font-size:11px;font-weight:700;padding:3px 10px;border-radius:5px;flex-shrink:0">${item.action}</span>
-        <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#e5e7eb;margin-bottom:2px">${item.ticker}</div><div style="font-size:13px;color:#6b7280">${item.reason}</div>${amtLine}</div>
+        <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#e5e7eb;margin-bottom:2px">${item.ticker}</div><div style="font-size:13px;color:#6b7280">${item.reason}</div>${amtLine}${falsLine}</div>
       </div>`;
     }).join('') + '</div>';
   });
   // Also show scan buy opportunities in actions tab
   const scanBuys = (STATE.scan?.buyOpportunities||[]);
   if (scanBuys.length) {
-    actHtml += `<div style="margin-bottom:24px"><div class="label" style="margin-bottom:10px;color:#22c55e">Market Scan  Buy Opportunities</div>` +
+    actHtml += `<div style="margin-bottom:24px"><div class="label" style="margin-bottom:10px;color:#22c55e">Market Scan - Buy Opportunities</div>` +
       scanBuys.map(b => {
-        const totalVal = parseFloat(String(STATE.analysis?.portfolioValue||55000));
-        const dollarAmt = b.suggestedAllocation ? (totalVal * parseFloat(b.suggestedAllocation) / 100).toFixed(0) : null;
+        // Was `|| 55000`, and reachable: a scan with no prior analysis rendered every
+        // dollar figure here off a fake $55k portfolio. Now it degrades to showing
+        // just the percentage.
+        const totalVal = parseFloat(String(STATE.analysis?.portfolioValue||0).replace(/[$,]/g,'')) || 0;
+        const dollarAmt = (totalVal && b.suggestedAllocation) ? (totalVal * parseFloat(b.suggestedAllocation) / 100).toFixed(0) : null;
         return `<div style="background:#081a0e;border:0.5px solid #14532d;border-radius:10px;padding:12px 16px;display:flex;gap:12px;align-items:flex-start;margin-bottom:8px">
           <span style="background:#16a34a;color:white;font-size:11px;font-weight:700;padding:3px 10px;border-radius:5px;flex-shrink:0">BUY</span>
-          <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#86efac;margin-bottom:2px">${b.ticker}  ${b.name}</div>
+          <div style="flex:1"><div style="font-size:14px;font-weight:600;color:#86efac;margin-bottom:2px">${b.ticker} - ${b.name}</div>
           <div style="font-size:13px;color:#6b7280">${b.thesis||''}</div>
-          ${dollarAmt?'<div style="font-size:12px;color:#86efac;margin-top:4px;font-weight:600">Suggested: '+b.suggestedAllocation+' of portfolio = ~'+Number(dollarAmt).toLocaleString()+'</div>':''}</div>
+          ${dollarAmt
+            ? '<div style="font-size:12px;color:#86efac;margin-top:4px;font-weight:600">Suggested: '+b.suggestedAllocation+' of portfolio = ~$'+Number(dollarAmt).toLocaleString()+'</div>'
+            : (b.suggestedAllocation ? '<div style="font-size:12px;color:#6b7280;margin-top:4px">Suggested: '+b.suggestedAllocation+' of portfolio</div>' : '')}</div>
         </div>`;
       }).join('') + '</div>';
   }
-  document.getElementById('actions-list').innerHTML = actHtml || '<p style="font-size:13px;color:#374151">No action items. Run an analysis to generate.</p>';
+  // "No action needed" is a real, blessed answer under the rewritten persona, so it
+  // has to be distinguishable from "nothing has run yet". Reading an intentional
+  // hold as a failed analysis would undo the point of removing the
+  // no-index-only-suggestions rule.
+  document.getElementById('actions-list').innerHTML = actHtml || (a.timestamp
+    ? `<div style="background:#081a0e;border:0.5px solid #14532d;border-radius:10px;padding:14px 16px">
+         <div style="font-size:14px;font-weight:600;color:#86efac;margin-bottom:4px">No action needed this month</div>
+         <div style="font-size:13px;color:#6b7280;line-height:1.6">The analysis ran and concluded the portfolio needs nothing. This is a valid result, not a failed run.${a.sectorAssessment?.verdict?` <span style="color:#9ca3af">${a.sectorAssessment.verdict}</span>`:''}</div>
+       </div>`
+    : '<p style="font-size:13px;color:#374151">No analysis has been run yet.</p>');
   // ── POSITIONS ──
   const pa = a.topPositionAnalysis||[];
   document.getElementById('positions-tbody').innerHTML = (p.holdings||[]).map(h=>{
