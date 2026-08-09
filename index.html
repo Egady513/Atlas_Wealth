@@ -80,7 +80,7 @@
       <div style="font-size:15px;color:#e5e7eb;font-weight:500;margin-bottom:6px">Drop Chase XLS here</div>
       <div style="font-size:13px;color:#4b5563">or click to browse</div>
     </div>
-    <input type="file" id="file-input" accept=".xls,.xlsx" style="display:none" onchange="handleFile(this.files[0])"/>
+    <input type="file" id="file-input" accept=".csv,.xls,.xlsx" style="display:none" onchange="handleFile(this.files[0])"/>
     <button onclick="showScreen('screen-dashboard');showTab('settings-tab')" style="margin-top:16px;background:transparent;border:none;font-size:12px;color:#374151;cursor:pointer">← Change credentials</button>
   </div>
 </div>
@@ -113,10 +113,10 @@
       <button class="btn-secondary" onclick="reAnalyze()" id="btn-analyze" style="font-size:12px">Re-analyze</button>
       <button class="btn-secondary" onclick="runScan()" id="btn-scan" style="font-size:12px;color:#93c5fd;border-color:#1e3a5f">Market scan</button>
       <button class="btn-primary" onclick="runFull()" id="btn-full" style="font-size:12px;padding:7px 16px" title="Runs both portfolio analysis + live market scan together">Full check ⚡</button>
-      <button onclick="document.getElementById('file-input2').click()" style="background:transparent;border:0.5px solid #1f2937;border-radius:8px;padding:7px 13px;font-size:12px;color:#6b7280">Update portfolio</button>
+      <button onclick="document.getElementById('file-input2').click()" style="background:transparent;border:0.5px solid #1f2937;border-radius:8px;padding:7px 13px;font-size:12px;color:#6b7280">Upload / update portfolio</button>
     </div>
   </div>
-  <input type="file" id="file-input2" accept=".xls,.xlsx" style="display:none" onchange="handleFile(this.files[0])"/>
+  <input type="file" id="file-input2" accept=".csv,.xls,.xlsx" style="display:none" onchange="handleFile(this.files[0])"/>
 
   <!-- Metrics strip -->
   <div class="metric-grid" id="metrics-strip">
@@ -501,6 +501,44 @@ async function callClaude(system, user, webSearch=false, model='claude-opus-5') 
 }
 
 // ── XLS PARSE ──────────────────────────────────────────────────────────────
+// Column aliases. Broker exports rename these constantly and the same download
+// button gives you .csv or .xls depending on where you clicked it, so match on
+// intent rather than on one exact string.
+const COLUMN_ALIASES = {
+  ticker:          ['ticker','symbol','security symbol','security id','sym'],
+  description:     ['description','security description','security name','name','security','investment','holding'],
+  value:           ['value','market value','current value','mkt value','market val','current mkt value','total value','ending value'],
+  cost:            ['cost','cost basis','total cost','cost basis total','adjusted cost basis','book value'],
+  quantity:        ['quantity','shares','qty','share quantity','units','number of shares'],
+  unrealizedGL:    ['unrealized g/l amt.','unrealized g/l amt','unrealized gain/loss','unrealized g/l','unrealized gain loss','gain/loss','gain loss','unrealized gain/loss amount','total gain/loss'],
+  unrealizedGLPct: ['unrealized gain/loss (%)','unrealized g/l %','unrealized gain/loss %','gain/loss %','% gain/loss','gain/loss percent','unrealized g/l pct','total gain/loss (%)'],
+  assetClass:      ['asset class','asset type','security type','class','category','asset category','type']
+};
+
+const normHeader = (s) => String(s||'').toLowerCase().replace(/\s+/g,' ').replace(/[^a-z0-9%/. ]/g,'').trim();
+
+// What the last parse actually matched. Shown to the user after upload so a
+// partially-read file is visible instead of quietly producing wrong totals.
+let LAST_PARSE = null;
+
+// Rows that are totals, subtotals or section headers rather than positions. These
+// carry a value but no real ticker, and silently including them double-counts the
+// portfolio.
+const TOTAL_ROW_RE = /^(total|subtotal|grand total|account total|net total|totals?)\b/i;
+
+function buildColumnMap(headerCells) {
+  const map = {};
+  const normalized = headerCells.map(normHeader);
+  Object.entries(COLUMN_ALIASES).forEach(([field, aliases]) => {
+    // Exact alias match first, then a contains-match, so "Unrealized G/L Amt. (USD)"
+    // still resolves without needing its own alias entry.
+    let idx = normalized.findIndex(h => h && aliases.includes(h));
+    if (idx === -1) idx = normalized.findIndex(h => h && aliases.some(a => h === a || h.startsWith(a + ' ') || h.includes(a)));
+    if (idx !== -1) map[field] = idx;
+  });
+  return map;
+}
+
 function parseXLS(file) {
   return new Promise((res, rej) => {
     const rd = new FileReader();
@@ -508,27 +546,84 @@ function parseXLS(file) {
       try {
         const wb = XLSX.read(e.target.result, { type: 'binary' });
         const ws = wb.Sheets[wb.SheetNames[0]];
-        const html = XLSX.utils.sheet_to_html(ws);
-        const doc = new DOMParser().parseFromString(html, 'text/html');
-        const rows = doc.querySelectorAll('tr');
-        let headers = [];
+        // Raw rows rather than the old HTML round-trip: sheet_to_json with header:1
+        // gives a plain array-of-arrays and works identically for .csv, .xls and
+        // .xlsx, since SheetJS normalises all three into a worksheet.
+        const rows = XLSX.utils.sheet_to_json(ws, { header: 1, blankrows: false, defval: '' })
+          .map(r => (Array.isArray(r) ? r : []).map(c => String(c == null ? '' : c).trim()));
+        if (!rows.length) throw new Error('That file appears to be empty.');
+
+        // Do NOT assume row 0 is the header. Broker exports routinely put account
+        // name, date and disclaimers above the table. Find the first row that has
+        // both an identifier column and a value column.
+        let headerIdx = -1, colMap = null;
+        for (let i = 0; i < Math.min(rows.length, 40); i++) {
+          const m = buildColumnMap(rows[i]);
+          if (m.ticker !== undefined && m.value !== undefined) { headerIdx = i; colMap = m; break; }
+        }
+        if (headerIdx === -1) {
+          // Fail loudly and usefully — name what was actually found so the fix is
+          // one step, not a guessing game.
+          const preview = rows.slice(0, 8).map((r,i) => `  row ${i+1}: ${r.filter(Boolean).slice(0,10).join(' | ') || '(empty)'}`).join('\n');
+          throw new Error(
+            'Could not find a holdings table in that file. It needs a header row with a ticker/symbol column and a value/market-value column.\n\nFirst rows of what was read:\n' + preview
+          );
+        }
+
+        const cell = (r, field) => (colMap[field] !== undefined ? (r[colMap[field]] || '') : '');
+        const num = (v) => { const n = parseFloat(String(v||'').replace(/[$,%\s]/g,'').replace(/^\((.*)\)$/,'-$1')); return isNaN(n) ? null : n; };
+
         const holdings = [];
-        rows.forEach((row, i) => {
-          const cells = Array.from(row.querySelectorAll('th,td')).map(c => c.textContent.trim());
-          if (i === 0) { headers = cells; return; }
-          if (cells.length < 5 || !cells[4]) return;
-          const obj = {}; headers.forEach((h, idx) => { obj[h] = cells[idx]||''; });
-          if (obj['Ticker']) holdings.push({
-            ticker: obj['Ticker'], description: obj['Description']||'',
-            value: obj['Value']||'', cost: obj['Cost']||'', quantity: obj['Quantity']||'',
-            unrealizedGL: obj['Unrealized G/L Amt.']||'', unrealizedGLPct: obj['Unrealized Gain/Loss (%)']||'',
-            assetClass: obj['Asset Class']||''
+        const skipped = [];
+        for (let i = headerIdx + 1; i < rows.length; i++) {
+          const r = rows[i];
+          if (!r.some(Boolean)) continue;
+          const ticker = cell(r, 'ticker').toUpperCase();
+          const descr = cell(r, 'description');
+          if (!ticker || TOTAL_ROW_RE.test(ticker) || TOTAL_ROW_RE.test(descr)) {
+            if (r.some(Boolean) && (ticker || descr)) skipped.push(ticker || descr);
+            continue;
+          }
+          const valueNum = num(cell(r, 'value'));
+          if (valueNum === null) { skipped.push(ticker); continue; }
+          const costNum = num(cell(r, 'cost'));
+          let glRaw = cell(r, 'unrealizedGL');
+          // Derive G/L when the export omits it but gives value and cost. Everything
+          // downstream reads unrealizedGL, so filling it here keeps the metrics honest
+          // instead of silently reporting zero gain.
+          if (num(glRaw) === null && costNum !== null) glRaw = String(valueNum - costNum);
+          let glPctRaw = cell(r, 'unrealizedGLPct');
+          if (num(glPctRaw) === null && costNum) glPctRaw = String(((valueNum - costNum) / costNum * 100).toFixed(2));
+
+          holdings.push({
+            ticker,
+            description: descr,
+            value: String(valueNum),
+            cost: costNum === null ? '' : String(costNum),
+            quantity: cell(r, 'quantity'),
+            unrealizedGL: num(glRaw) === null ? '' : String(num(glRaw)),
+            unrealizedGLPct: num(glPctRaw) === null ? '' : String(num(glPctRaw)),
+            assetClass: cell(r, 'assetClass')
           });
-        });
-        res(holdings.filter(h => h.ticker));
+        }
+
+        if (!holdings.length) {
+          throw new Error('Found the header row but no positions under it. Columns detected: ' + Object.keys(colMap).join(', ') + '.');
+        }
+        // Surface what the parser matched and what it threw away, so a silently
+        // half-read file is visible rather than quietly wrong.
+        LAST_PARSE = {
+          rowsRead: holdings.length,
+          headerRow: headerIdx + 1,
+          matchedColumns: Object.keys(colMap),
+          missingColumns: ['cost','quantity','unrealizedGL','assetClass'].filter(f => colMap[f] === undefined),
+          skipped
+        };
+        res(holdings);
       } catch(e) { rej(e); }
     };
-    rd.onerror = rej; rd.readAsBinaryString(file);
+    rd.onerror = () => rej(new Error('Could not read that file.'));
+    rd.readAsBinaryString(file);
   });
 }
 
@@ -733,7 +828,7 @@ async function loadFromSupabase() {
       showScreen('screen-dashboard');
       // If we have creds but no portfolio, auto-prompt with a notification
       if (!STATE.portfolio) {
-        setTimeout(() => showNotif('No portfolio loaded yet - click "Update portfolio" to upload your Chase XLS', 'info'), 800);
+        setTimeout(() => showNotif('No portfolio loaded yet - click "Upload / update portfolio" (top right) and pick your Chase CSV or XLS', 'info'), 800);
       }
     }, 300);
   } catch(e) {
@@ -754,6 +849,15 @@ async function handleFile(file) {
   try {
     const holdings = await parseXLS(file);
     if (!holdings.length) throw new Error('No holdings found in file');
+    // Report what was actually read. A file that parses to 6 of 25 positions still
+    // renders a confident-looking dashboard, so this is the only signal that
+    // something went wrong.
+    if (LAST_PARSE) {
+      const bits = [`Read ${LAST_PARSE.rowsRead} position${LAST_PARSE.rowsRead===1?'':'s'} (header on row ${LAST_PARSE.headerRow})`];
+      if (LAST_PARSE.missingColumns.length) bits.push(`no ${LAST_PARSE.missingColumns.join('/')} column`);
+      if (LAST_PARSE.skipped.length) bits.push(`skipped ${LAST_PARSE.skipped.length} non-position row${LAST_PARSE.skipped.length===1?'':'s'}`);
+      showNotif(bits.join(' · '), LAST_PARSE.missingColumns.length ? 'info' : 'success');
+    }
     setProgress(15, 'Saving to Supabase...');
     STATE.portfolio = { holdings, savedAt: Date.now(), filename: file.name };
     // Keep writing the current snapshot to 'portfolio' for backward compatibility
@@ -940,7 +1044,13 @@ async function doAnalysis(holdings) {
 }
 
 async function doScan(holdings) {
-  const tickers = holdings.map(h=>h.ticker).join(', ');
+  holdings = Array.isArray(holdings) ? holdings : [];
+  // Holdings are optional here. With none, the scan still does market news and
+  // input-chain themes; it just can't cross-reference against what's owned, and it
+  // must be told that explicitly so it doesn't invent a portfolio.
+  const tickers = holdings.length
+    ? holdings.map(h=>h.ticker).join(', ')
+    : '(none loaded - no positions file has been uploaded yet. Do NOT invent holdings. Return market news and input-chain themes only, and leave every userExposureToday array empty.)';
   // The existing register goes IN so themes persist and get updated rather than
   // reinvented each run. Only the fields the model needs to recognise and update
   // a theme are sent — not the whole stored object.
@@ -976,8 +1086,25 @@ async function doScan(holdings) {
   if (buys.length) await tgSend(`📈 <b>NEW BUY OPPORTUNITY</b>\n\n` + buys.map(b=>`📈 <b>${b.ticker}</b> — ${b.name}\n${b.thesis}\nSuggested: ${b.suggestedAllocation}`).join('\n\n') + `\n\n<i>Atlas Wealth Monitor · ${new Date().toLocaleTimeString()}</i>`);
 }
 
+// These three used to `return` silently when no portfolio was loaded, so clicking
+// the button did nothing at all — no error, no message, indistinguishable from a
+// broken API key. Now: say why, and only block the things that genuinely need
+// holdings.
+function needCreds() {
+  if (CREDS && CREDS.anthropicKey && CREDS.sbUrl && CREDS.sbKey) return false;
+  showNotif('Add your Anthropic API key and Supabase credentials in Settings first', 'error');
+  showTab('settings-tab');
+  return true;
+}
+
 async function reAnalyze() {
-  if (!STATE.portfolio) return;
+  if (needCreds()) return;
+  // Analysis is arithmetic and judgement over positions. With no positions there is
+  // literally nothing to analyse.
+  if (!STATE.portfolio || !(STATE.portfolio.holdings||[]).length) {
+    showNotif('Portfolio analysis needs your positions - click "Upload / update portfolio" first. (Market scan works without them.)', 'error');
+    return;
+  }
   setBusy(true, 'analyze');
   try { await doAnalysis(STATE.portfolio.holdings); renderDashboard(); showNotif('Analysis complete', 'success'); }
   catch(e) { showNotif('Failed: ' + e.message, 'error'); }
@@ -985,17 +1112,34 @@ async function reAnalyze() {
 }
 
 async function runScan() {
-  if (!STATE.portfolio) return;
+  if (needCreds()) return;
+  // A market scan does NOT require holdings. Without them it still returns market
+  // news, sector trends and input-chain themes — the build-out themes are about the
+  // wider economy, not this portfolio. Holdings only add the "what do you already
+  // own on this chain" cross-reference.
+  const holdings = (STATE.portfolio && STATE.portfolio.holdings) || [];
   setBusy(true, 'scan');
-  try { await doScan(STATE.portfolio.holdings); renderDashboard(); showNotif('Scan complete', 'success'); }
+  try {
+    await doScan(holdings);
+    renderDashboard();
+    showNotif(holdings.length ? 'Scan complete' : 'Market scan complete - upload a portfolio to also see which of your holdings sit on these chains', 'success');
+  }
   catch(e) { showNotif('Failed: ' + e.message, 'error'); }
   setBusy(false, 'scan');
 }
 
 async function runFull() {
-  if (!STATE.portfolio) return;
+  if (needCreds()) return;
+  const holdings = (STATE.portfolio && STATE.portfolio.holdings) || [];
   setBusy(true, 'full');
-  try { await doScan(STATE.portfolio.holdings); await doAnalysis(STATE.portfolio.holdings); renderDashboard(); showNotif('Full check complete', 'success'); }
+  try {
+    await doScan(holdings);
+    // Scan-then-analyse ordering is deliberate (the scan is the only source of
+    // current macro facts). If there are no holdings, run the scan alone rather
+    // than failing the whole action.
+    if (holdings.length) { await doAnalysis(holdings); renderDashboard(); showNotif('Full check complete', 'success'); }
+    else { renderDashboard(); showNotif('Market scan done. Skipped portfolio analysis - no positions loaded yet.', 'info'); }
+  }
   catch(e) { showNotif('Failed: ' + e.message, 'error'); }
   setBusy(false, 'full');
 }
