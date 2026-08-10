@@ -281,9 +281,13 @@
           </div>
           <button class="btn-success" onclick="testTelegram()" style="font-size:12px;padding:8px 16px">Send test message</button>
         </div>
-        <div style="display:flex;gap:10px">
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
           <button class="btn-primary" onclick="saveSettings()" style="flex:1">Save settings</button>
+          <button class="btn-secondary" onclick="testSupabase()" title="Writes and reads back a throwaway row to confirm the anon key can actually persist data">Test Supabase</button>
           <button class="btn-danger" onclick="resetAll()">Reset all</button>
+        </div>
+        <div style="font-size:11px;color:#4b5563;margin-top:8px;line-height:1.6">
+          <strong style="color:#6b7280">Test Supabase</strong> confirms your portfolio will actually persist between sessions. If it fails, the app still works — but you'll re-upload your file every time and tracked Input Chain themes won't accumulate.
         </div>
       </div>
     </div>
@@ -386,31 +390,106 @@ function showNotif(msg, type='info') {
 }
 
 // ── PROGRESS ───────────────────────────────────────────────────────────────
-function setProgress(pct, text) {
+// The scan and analysis are single long API calls with no intermediate progress
+// to report, so the bar sits at one number for minutes. Without a running clock
+// that is indistinguishable from a hang — the timer is the whole point.
+let PROGRESS_TIMER = null;
+
+function setProgress(pct, text, expectSlow) {
   document.getElementById('progress-fill').style.width = pct + '%';
   document.getElementById('progress-pct').textContent = pct + '%';
-  document.getElementById('progress-text').textContent = text;
+  const el = document.getElementById('progress-text');
+  if (PROGRESS_TIMER) { clearInterval(PROGRESS_TIMER); PROGRESS_TIMER = null; }
+  if (!expectSlow) { el.textContent = text; return; }
+  const started = Date.now();
+  const tick = () => {
+    const s = Math.floor((Date.now() - started) / 1000);
+    const mins = Math.floor(s / 60), secs = s % 60;
+    const elapsed = mins ? `${mins}m ${String(secs).padStart(2,'0')}s` : `${secs}s`;
+    // Only editorialise once it's genuinely running long for this step.
+    const note = s > 240
+      ? ' — longer than expected; check the browser console for errors'
+      : s > 20 ? ' — this step normally takes 1-3 minutes' : '';
+    el.textContent = `${text} (${elapsed})${note}`;
+  };
+  tick();
+  PROGRESS_TIMER = setInterval(tick, 1000);
+}
+
+function stopProgressTimer() {
+  if (PROGRESS_TIMER) { clearInterval(PROGRESS_TIMER); PROGRESS_TIMER = null; }
 }
 
 // ── SUPABASE ───────────────────────────────────────────────────────────────
+// A fetch() only REJECTS on network failure. An HTTP 401/403/404/400 resolves
+// normally with r.ok === false — so the previous `try { await fetch() } catch`
+// returned true on a Supabase permission error, and the app reported saves that
+// never happened. Symptom: the portfolio had to be re-uploaded every session,
+// and nothing (including the input-chain trend register) ever persisted.
+// Every failure is now recorded and surfaced instead of swallowed.
+let SB_LAST_ERROR = null;
+
+async function sbFail(op, key, r) {
+  let detail = '';
+  try { detail = (await r.text()).slice(0, 300); } catch {}
+  const hint =
+    r.status === 401 || r.status === 403
+      ? ' — the anon key was rejected. Either row-level security is on without a policy that allows anon, or the key is wrong.'
+      : r.status === 404
+      ? ' — table `portfolio_store` not found at that project URL.'
+      : r.status === 400 && /duplicate|unique|constraint|on conflict/i.test(detail)
+      ? ' — the upsert needs `key` to be a primary key or have a UNIQUE constraint on portfolio_store.'
+      : '';
+  SB_LAST_ERROR = `${op} "${key}" failed: HTTP ${r.status}${hint}${detail ? ` [${detail}]` : ''}`;
+  console.error('[supabase]', SB_LAST_ERROR);
+  return SB_LAST_ERROR;
+}
+
 async function sbGet(key) {
   try {
     const r = await fetch(`${CREDS.sbUrl}/rest/v1/portfolio_store?key=eq.${encodeURIComponent(key)}&select=value`, {
       headers: { apikey: CREDS.sbKey, Authorization: `Bearer ${CREDS.sbKey}` }
     });
+    if (!r.ok) { await sbFail('read', key, r); return null; }
     const d = await r.json();
     return d?.[0]?.value ?? null;
-  } catch { return null; }
+  } catch (e) {
+    SB_LAST_ERROR = `read "${key}" failed: ${e.message} — check the Supabase URL.`;
+    console.error('[supabase]', SB_LAST_ERROR);
+    return null;
+  }
 }
+
 async function sbSet(key, value) {
   try {
-    await fetch(`${CREDS.sbUrl}/rest/v1/portfolio_store`, {
+    const r = await fetch(`${CREDS.sbUrl}/rest/v1/portfolio_store`, {
       method: 'POST',
       headers: { apikey: CREDS.sbKey, Authorization: `Bearer ${CREDS.sbKey}`, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates' },
       body: JSON.stringify({ key, value, updated_at: new Date().toISOString() })
     });
+    if (!r.ok) { await sbFail('write', key, r); return false; }
     return true;
-  } catch { return false; }
+  } catch (e) {
+    SB_LAST_ERROR = `write "${key}" failed: ${e.message} — check the Supabase URL.`;
+    console.error('[supabase]', SB_LAST_ERROR);
+    return false;
+  }
+}
+
+// Round-trips a throwaway key so the exact failure is visible on demand rather
+// than only after an upload silently fails. This is also the fastest way to
+// answer the open RLS question.
+async function testSupabase() {
+  if (!CREDS || !CREDS.sbUrl || !CREDS.sbKey) { showNotif('Enter your Supabase URL and key first', 'error'); return; }
+  SB_LAST_ERROR = null;
+  showNotif('Testing Supabase...', 'info');
+  const probe = { at: new Date().toISOString(), note: 'atlas connection test' };
+  const wrote = await sbSet('__connection_test', probe);
+  if (!wrote) { showNotif('WRITE FAILED — ' + SB_LAST_ERROR, 'error'); return; }
+  const readBack = await sbGet('__connection_test');
+  if (!readBack) { showNotif('Write OK but READ FAILED — ' + (SB_LAST_ERROR || 'no row returned'), 'error'); return; }
+  if (readBack.at !== probe.at) { showNotif('Read returned stale data — the upsert is not replacing rows. Check that `key` is a primary key.', 'error'); return; }
+  showNotif('Supabase read + write both working. Your portfolio will persist.', 'success');
 }
 // Fetch all rows whose key starts with `prefix` (e.g. 'snapshot_' or 'analysis_').
 // ISO8601 timestamps sort lexicographically, so ordering by key gives chronological order.
@@ -820,6 +899,7 @@ async function loadFromSupabase() {
     if (ah) STATE.alertsHistory = ah;
     if (cl) STATE.checkLog = cl;
     if (Array.isArray(tr)) STATE.trendRegister = tr;
+    stopProgressTimer();
     setProgress(100, 'Done!');
     setTimeout(() => {
       // Always go to dashboard - upload screen is bypassed entirely
@@ -832,6 +912,7 @@ async function loadFromSupabase() {
       }
     }, 300);
   } catch(e) {
+    stopProgressTimer();
     showNotif('Supabase connection failed: ' + e.message, 'error');
     showScreen('screen-dashboard');
   }
@@ -862,20 +943,27 @@ async function handleFile(file) {
     STATE.portfolio = { holdings, savedAt: Date.now(), filename: file.name };
     // Keep writing the current snapshot to 'portfolio' for backward compatibility
     // with the existing load path (loadFromSupabase reads this key).
-    await sbSet('portfolio', STATE.portfolio);
+    // If this write fails the portfolio is gone on the next page load, which is
+    // exactly the "why do I keep re-uploading?" symptom. Say so loudly instead
+    // of proceeding as though it saved.
+    const saved = await sbSet('portfolio', STATE.portfolio);
+    if (!saved) {
+      showNotif('⚠ Portfolio NOT saved to Supabase — you will have to re-upload next time. ' + (SB_LAST_ERROR || ''), 'error');
+    }
     // ALSO write an immutable, timestamped snapshot so upload history is never
     // overwritten — this is the raw material for benchmark tracking and
     // recommendation scoring. ISO8601 sorts lexicographically, preserving order.
     const snapshotTs = new Date().toISOString();
     const portfolioValue = holdings.reduce((sum, h) => sum + (parseFloat(String(h.value||'0').replace(/[$,]/g,'')) || 0), 0);
     await sbSet(`snapshot_${snapshotTs}`, { timestamp: snapshotTs, holdings, portfolioValue, filename: file.name });
-    setProgress(30, 'Running market scan...');
+    setProgress(30, 'Running market scan (live web search)', true);
     await doScan(holdings);
-    setProgress(70, 'Running portfolio analysis...');
+    setProgress(70, 'Running portfolio analysis', true);
     await doAnalysis(holdings);
+    stopProgressTimer();
     setProgress(100, 'Complete!');
     setTimeout(() => { renderDashboard(); showScreen('screen-dashboard'); }, 400);
-  } catch(e) { showNotif(e.message, 'error'); showScreen('screen-dashboard'); }
+  } catch(e) { stopProgressTimer(); showNotif(e.message, 'error'); showScreen('screen-dashboard'); }
 }
 
 // ── ANALYSIS ───────────────────────────────────────────────────────────────
