@@ -148,6 +148,14 @@
 
     <!-- OVERVIEW -->
     <div class="tab-content active" id="tab-overview">
+      <!-- The brief is the deliverable. Everything below it is supporting detail. -->
+      <div id="exec-brief" style="display:none;background:#0a0a12;border:0.5px solid #1f2937;border-left:3px solid #6366f1;border-radius:14px;padding:24px 26px;margin-bottom:16px;max-width:820px">
+        <div style="font-size:10px;color:#4b5563;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:12px">The brief <span id="brief-asof" style="text-transform:none;letter-spacing:0;color:#374151"></span></div>
+        <div id="brief-headline" style="font-size:21px;line-height:1.35;font-weight:600;color:#f9fafb;margin-bottom:14px;letter-spacing:-0.01em"></div>
+        <div id="brief-bottomline" style="font-size:15px;line-height:1.75;color:#9ca3af;margin-bottom:20px"></div>
+        <div id="brief-actions"></div>
+      </div>
+      <div id="stale-warning" style="display:none;background:#1a1208;border:0.5px solid #78350f;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:#fcd34d;line-height:1.6;max-width:820px"></div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px">
         <div class="card">
           <div class="label">Portfolio health</div>
@@ -165,6 +173,11 @@
           <div class="label">Market pulse</div>
           <div id="market-pulse"><p style="font-size:13px;color:#374151">Run market scan to populate.</p></div>
         </div>
+        <!-- Supporting detail, collapsed by default. The brief above is the read;
+             this is here for when a number needs checking, not to be scanned. -->
+        <details id="detail-disclosure" style="grid-column:1/-1;margin-top:2px">
+          <summary style="cursor:pointer;font-size:12px;color:#6b7280;padding:9px 0;list-style:none;user-select:none">▸ Supporting detail — sector exposure, policy exposure, macro read</summary>
+          <div style="display:grid;grid-template-columns:1fr;gap:14px;margin-top:10px">
         <div class="card" id="sector-card" style="display:none;grid-column:1/-1">
           <div class="label">Sector exposure <span style="color:#22c55e;font-size:10px;text-transform:none;letter-spacing:0">· measured, not estimated</span></div>
           <div style="height:10px;border-radius:5px;overflow:hidden;display:flex;background:#07070c;margin:10px 0 12px"><div id="sector-bar" style="display:flex;width:100%;height:100%"></div></div>
@@ -181,6 +194,8 @@
           <div class="label">Analyst macro thesis</div>
           <p id="macro-thesis" style="font-size:14px;color:#9ca3af;line-height:1.8"></p>
         </div>
+          </div>
+        </details>
         <div id="buy-opps-overview" style="display:none;background:#081a0e;border:0.5px solid #14532d;border-radius:14px;padding:20px;grid-column:1/-1">
           <div class="label" style="color:#22c55e">New buy opportunities</div>
           <div id="buy-opps-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:10px"></div>
@@ -207,6 +222,11 @@
     <div class="tab-content" id="tab-inputchain-content">
       <div style="background:#0a0a12;border:0.5px solid #1f2937;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:12px;color:#6b7280;line-height:1.7">
         Build-out themes traced <strong style="color:#9ca3af">upstream</strong> to the inputs they consume. Themes persist between scans, so the value is the trajectory — how long one has been tracked and how its maturity has moved. <strong style="color:#f59e0b">Consensus</strong> is a warning: by then the obvious ways to own it have usually repriced.
+      </div>
+      <div id="offportfolio-section" style="display:none;margin-bottom:22px">
+        <div style="font-size:15px;font-weight:600;color:#f9fafb;margin-bottom:4px">Off your portfolio</div>
+        <div style="font-size:12px;color:#6b7280;margin-bottom:12px;line-height:1.6;max-width:720px">Materials, technologies and companies you do <strong style="color:#9ca3af">not</strong> own that sit on these chains. This is the "who sells the shovels" list — read it as things to understand, not things to buy.</div>
+        <div id="offportfolio-list"></div>
       </div>
       <div id="inputchain-list"></div>
     </div>
@@ -323,8 +343,10 @@ MEASURED FACTS ARE HANDED TO YOU. The user message contains a PORTFOLIO FACTS bl
 
 POLICY EXPOSURE. For each meaningful holding, identify which government-policy transmission channels could change its actual cash flows: tariffs, export controls, interest-rate path, antitrust, federal procurement, drug pricing, energy policy, immigration/labor, or none. This is about mechanism, not headlines — the question is "if this policy changed, would this company's earnings change, and through what path", NOT "has anyone said anything about it lately." Only claim a channel where you can name the mechanism. Most holdings have one or two channels; some genuinely have none, and "none" is a valid answer.
 
+THE EXECUTIVE BRIEF IS YOUR PRIMARY DELIVERABLE. Assume the user reads only that and nothing else. Write it as plain connected prose for a smart reader who has been away — not as fragments, bullet shorthand, arrow chains, or jargon. Lead with the conclusion, the way a good newspaper lede does: the first sentence says what matters, and detail follows. Name the one thing that matters most rather than listing five things of equal weight. If nothing needs doing, say that plainly and confidently — "nothing to do this month" is a valuable answer, not a failure. Everything else in this JSON is supporting detail the user may never open.
+
 Return ONLY valid JSON, no markdown:
-{"score":<1-10>,"scoreAfterRebalance":<1-10>,"alerts":[{"level":"critical"|"warning"|"info","ticker":"<ticker>","title":"<short>","message":"<1-2 sentences>"}],"actionItems":[{"action":"SELL"|"BUY"|"TRIM"|"HOLD"|"ADD","ticker":"<ticker>","reason":"<concise>","urgency":"immediate"|"this-week"|"this-month","falsifier":"<what observable thing would show this call was wrong>","trimPct":<for TRIM/SELL: % of position to sell, e.g. 30>,"sizePct":<for BUY/ADD: % of total portfolio to allocate, e.g. 4>}],"sectorAssessment":{"verdict":"<1-2 sentences on what the MEASURED sector numbers mean for risk>","concerns":["<specific concentration or correlation concern>"]},"policyExposure":[{"ticker":"<ticker>","channels":["tariffs"|"export-controls"|"rate-path"|"antitrust"|"federal-procurement"|"drug-pricing"|"energy-policy"|"labor"],"mechanism":"<one sentence: how a change transmits to earnings>","direction":"helped-by-loosening"|"hurt-by-tightening"|"two-sided"}],"stressTests":[{"scenario":"<n>","currentImpact":"<e.g. -30% to -38%>","rebalancedImpact":"<e.g. -20%>"}],"strengths":["<s1>","<s2>","<s3>"],"weaknesses":["<w1>","<w2>","<w3>"],"topPositionAnalysis":[{"ticker":"<t>","verdict":"strong-hold"|"hold"|"trim"|"sell"|"add","note":"<one sentence>"}],"macroThesis":"<2-3 sentence market read for this portfolio>","telegramWorthy":<true|false>}
+{"executiveBrief":{"headline":"<ONE sentence, under 20 words: the single most important thing about this portfolio right now>","bottomLine":"<3-5 sentences of plain prose. What changed since last time (or, on a first run, what stands out). What it means for THIS portfolio specifically. Whether anything needs doing. No lists, no jargon, no hedging.>","doThis":["<at most 3 concrete actions, each one short sentence. If nothing is needed, return exactly one entry saying so and why.>"],"watchThis":["<at most 3 things worth watching that are NOT actions — each one short sentence>"]},"score":<1-10>,"scoreAfterRebalance":<1-10>,"alerts":[{"level":"critical"|"warning"|"info","ticker":"<ticker>","title":"<short>","message":"<1-2 sentences>"}],"actionItems":[{"action":"SELL"|"BUY"|"TRIM"|"HOLD"|"ADD","ticker":"<ticker>","reason":"<concise>","urgency":"immediate"|"this-week"|"this-month","falsifier":"<what observable thing would show this call was wrong>","trimPct":<for TRIM/SELL: % of position to sell, e.g. 30>,"sizePct":<for BUY/ADD: % of total portfolio to allocate, e.g. 4>}],"sectorAssessment":{"verdict":"<1-2 sentences on what the MEASURED sector numbers mean for risk>","concerns":["<specific concentration or correlation concern>"]},"policyExposure":[{"ticker":"<ticker>","channels":["tariffs"|"export-controls"|"rate-path"|"antitrust"|"federal-procurement"|"drug-pricing"|"energy-policy"|"labor"],"mechanism":"<one sentence: how a change transmits to earnings>","direction":"helped-by-loosening"|"hurt-by-tightening"|"two-sided"}],"stressTests":[{"scenario":"<n>","currentImpact":"<e.g. -30% to -38%>","rebalancedImpact":"<e.g. -20%>"}],"strengths":["<s1>","<s2>","<s3>"],"weaknesses":["<w1>","<w2>","<w3>"],"topPositionAnalysis":[{"ticker":"<t>","verdict":"strong-hold"|"hold"|"trim"|"sell"|"add","note":"<one sentence>"}],"macroThesis":"<2-3 sentence market read for this portfolio>","telegramWorthy":<true|false>}
 
 actionItems MAY be an empty array. If the portfolio needs nothing this month, return [] and say why in sectorAssessment.verdict. Set telegramWorthy true ONLY for something that genuinely cannot wait until he next opens the app — a real, dated, position-specific risk. Routine rebalancing observations are not telegramWorthy.`;
 
@@ -362,7 +384,7 @@ The user message contains an EXISTING TREND REGISTER. These are input-chain them
 - Maturity should move over time: early → accelerating → consensus → fading. Moving a theme backwards needs a reason.
 
 Return ONLY valid JSON:
-{"marketSummary":"<2-3 sentences>","newsItems":[{"ticker":"<ticker or MARKET>","headline":"<actual headline>","summary":"<1-2 sentences>","impact":"bullish"|"bearish"|"neutral","severity":"critical"|"warning"|"info","durability":"policy-change"|"sentiment-only"|"company-fundamental"|"macro-data","speaker":"<name/role if this is a statement by a person, else empty>","recommendation":"<specific action, or an explicit statement that no action is warranted and why>","telegramWorthy":<true|false>}],"sectorTrends":[{"sector":"<n>","trend":"up"|"down"|"sideways","note":"<one sentence>","action":"rotate-in"|"rotate-out"|"hold"}],"inputChainThemes":[{"theme":"<short stable name for this build-out, reused verbatim across runs>","demandDrivers":["<observable, dated evidence of what is being built or scaled>"],"inputChain":[{"layer":"raw-material"|"refined-material"|"component"|"capital-equipment"|"infrastructure","input":"<the specific input>","whyRequired":"<the physical or technical reason it is needed>","chokepoint":<true|false>,"chokepointReason":"<what makes it hard to substitute, or empty if commoditised>"}],"publicWaysToOwnIt":[{"ticker":"<ticker>","layer":"<which layer above>","purity":"pure-play"|"significant"|"incidental","note":"<one sentence>"}],"userExposureToday":["<tickers the user ALREADY owns that sit anywhere on this chain — check the holdings list>"],"maturity":"early"|"accelerating"|"consensus"|"fading","consensusView":"<what the market already believes and has already priced>","downsideCase":"<what breaks this, and what happens to the suppliers when it does>","falsifier":"<the specific observable event that would show this theme is over or wrong>","invalidated":<true|false>,"sourceEvidence":"<the dated news or data from your search supporting this — no training-data recall>"}],"buyOpportunities":[{"ticker":"<ticker>","name":"<full name>","thesis":"<2-3 sentence buy thesis>","suggestedAllocation":"<% of portfolio>","urgency":"immediate"|"this-week"|"this-month","category":"<e.g. AI power, energy hedge>","linkedTheme":"<matching inputChainThemes theme name, or empty>","telegramWorthy":<true|false>}],"rotationAlerts":[{"from":"<ticker>","to":"<ticker>","reason":"<why now>","telegramWorthy":<true|false>}],"topRisk":"<biggest risk>","topOpportunity":"<best opportunity>"}
+{"marketSummary":"<2-3 sentences>","newsItems":[{"ticker":"<ticker or MARKET>","publishedDate":"<YYYY-MM-DD from the source page — required>","headline":"<actual headline>","summary":"<1-2 sentences>","impact":"bullish"|"bearish"|"neutral","severity":"critical"|"warning"|"info","durability":"policy-change"|"sentiment-only"|"company-fundamental"|"macro-data","speaker":"<name/role if this is a statement by a person, else empty>","recommendation":"<specific action, or an explicit statement that no action is warranted and why>","telegramWorthy":<true|false>}],"offPortfolioWatchlist":[{"name":"<company, material, or technology>","ticker":"<ticker if public, else empty>","category":"raw-material"|"refined-material"|"component"|"capital-equipment"|"infrastructure"|"technology","linkedTheme":"<matching inputChainThemes theme name, or empty>","whatItIs":"<one plain sentence — assume the user has never heard of it>","whyNow":"<the dated, observable reason it matters right now>","publishedDate":"<YYYY-MM-DD of the evidence>","howToOwnIt":"<public tickers with purity, or 'no clean public exposure' — say so when that's the honest answer>","alreadyPriced":"<what the market already believes>","risk":"<the main way this disappoints>"}],"sectorTrends":[{"sector":"<n>","trend":"up"|"down"|"sideways","note":"<one sentence>","action":"rotate-in"|"rotate-out"|"hold"}],"inputChainThemes":[{"theme":"<short stable name for this build-out, reused verbatim across runs>","demandDrivers":["<observable, dated evidence of what is being built or scaled>"],"inputChain":[{"layer":"raw-material"|"refined-material"|"component"|"capital-equipment"|"infrastructure","input":"<the specific input>","whyRequired":"<the physical or technical reason it is needed>","chokepoint":<true|false>,"chokepointReason":"<what makes it hard to substitute, or empty if commoditised>"}],"publicWaysToOwnIt":[{"ticker":"<ticker>","layer":"<which layer above>","purity":"pure-play"|"significant"|"incidental","note":"<one sentence>"}],"userExposureToday":["<tickers the user ALREADY owns that sit anywhere on this chain — check the holdings list>"],"maturity":"early"|"accelerating"|"consensus"|"fading","consensusView":"<what the market already believes and has already priced>","downsideCase":"<what breaks this, and what happens to the suppliers when it does>","falsifier":"<the specific observable event that would show this theme is over or wrong>","invalidated":<true|false>,"sourceEvidence":"<the dated news or data from your search supporting this — no training-data recall>"}],"buyOpportunities":[{"ticker":"<ticker>","name":"<full name>","thesis":"<2-3 sentence buy thesis>","suggestedAllocation":"<% of portfolio>","urgency":"immediate"|"this-week"|"this-month","category":"<e.g. AI power, energy hedge>","linkedTheme":"<matching inputChainThemes theme name, or empty>","telegramWorthy":<true|false>}],"rotationAlerts":[{"from":"<ticker>","to":"<ticker>","reason":"<why now>","telegramWorthy":<true|false>}],"topRisk":"<biggest risk>","topOpportunity":"<best opportunity>"}
 
 Set telegramWorthy true ONLY for a dated, position-specific, policy-change-grade development. Never for sentiment-only statements, and never for a theme update.`;
 
@@ -1150,7 +1172,27 @@ async function doScan(holdings) {
   const registerBlock = register.length
     ? `EXISTING TREND REGISTER (${register.length} tracked input-chain themes — return the live ones again using their exact "theme" string with refreshed evidence; only add a genuinely new build-out):\n${JSON.stringify(register,null,2)}`
     : `EXISTING TREND REGISTER: empty — this is the first scan, so establish an initial set of input-chain themes grounded in what your search actually finds. Quality over quantity; 2-4 well-evidenced themes beats a long speculative list.`;
-  const result = await callClaude(SCAN_PROMPT, `Search for current news and market data. Portfolio: ${tickers}\n\nHoldings:\n${JSON.stringify(holdings.map(h=>({ticker:h.ticker,value:h.value,unrealizedGLPct:h.unrealizedGLPct})),null,2)}\n\n${registerBlock}\n\nScan for: (1) news on these holdings, classified by durability; (2) statements by influential people that could change policy, separated from statements that only move sentiment; (3) input-chain themes — what is being built at scale, what upstream inputs it consumes, which layers are genuine chokepoints, and which of these holdings already sit on those chains without the user having chosen that exposure; (4) sector rotation; (5) buy candidates, linked to a theme where one applies. Do not restrict the search to any preset list of sectors — follow the demand and the inputs wherever they lead.`, true, 'claude-sonnet-5');
+  // TODAY'S DATE MUST LEAD. This is the only pass with web search, and without a
+  // clock the model cannot tell a nine-month-old page from this morning's — it
+  // fills the gap from training data and reports stale news as current. That was
+  // a real bug: every headline came back roughly nine months out of date.
+  const now = new Date();
+  const todayLong = now.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
+  const todayISO = now.toISOString().slice(0,10);
+  const windowStart = new Date(now.getTime() - RECENCY_DAYS*86400000).toISOString().slice(0,10);
+  const dateBlock =
+`TODAY IS ${todayLong} (${todayISO}).
+
+Your training data ends well before today. You do NOT know what has happened recently — you must search for it. Anything you "remember" about markets is months out of date and must not be reported as current.
+
+RECENCY REQUIREMENT — this is a hard filter, not a preference:
+- Only report developments dated ${windowStart} or later (the last ${RECENCY_DAYS} days).
+- Every newsItem MUST carry publishedDate as YYYY-MM-DD, taken from the source page. If you cannot establish a date from the source, do not report the item.
+- Before reporting anything, check its date against ${todayISO}. If it is older than ${windowStart}, discard it — do not include it as background or context.
+- If your searches genuinely surface nothing recent for a holding, return no newsItem for it. An empty newsItems array is a correct answer. Do NOT pad with older material to look thorough.
+- The same rule applies to inputChainThemes: demandDrivers must cite dated evidence from this window. A theme whose only evidence is older than the window should be returned with its existing maturity and a note that no new evidence appeared this period.`;
+
+  const result = await callClaude(SCAN_PROMPT, `${dateBlock}\n\nPortfolio (${holdings.length} positions): ${tickers}\n\nHoldings:\n${JSON.stringify(holdings.map(h=>({ticker:h.ticker,value:h.value,unrealizedGLPct:h.unrealizedGLPct})),null,2)}\n\n${registerBlock}\n\nScan for:\n(1) News on these holdings, each with publishedDate and a durability classification.\n(2) Statements by influential people that could change policy, separated from statements that only move sentiment.\n(3) Input-chain themes — what is being built at scale, what upstream inputs it consumes, which layers are genuine chokepoints, and which holdings already sit on those chains unchosen.\n(4) OFF-PORTFOLIO DISCOVERY — materials, technologies, and companies the user does NOT own that sit on these chains. This is a required section, not optional: the user explicitly wants to hear about names outside the portfolio (specific minerals and refined inputs, emerging build-outs such as on-site/modular nuclear for data centers, distributed or edge data centers, grid equipment, and the suppliers underneath them). Do not restrict yourself to sectors the portfolio already covers.\n(5) Sector rotation.\n\nFollow the demand and the inputs wherever they lead.`, true, 'claude-sonnet-5');
   result.timestamp = Date.now();
   STATE.scan = result;
   await sbSet('last_scan', result);
@@ -1248,6 +1290,35 @@ function setBusy(busy, type) {
   }
 }
 
+// How far back a "current" development may be dated. Anything older is treated as
+// stale regardless of what the model claimed, because prompt instructions alone did
+// not hold: without a date anchor the scan reported nine-month-old news as current.
+const RECENCY_DAYS = 45;
+
+// Trust-but-verify on dates. The prompt demands a publishedDate inside the window;
+// this checks it independently and quarantines anything that fails, so a stale item
+// can never be rendered as current news again.
+function auditRecency(scan) {
+  const cutoff = Date.now() - RECENCY_DAYS * 86400000;
+  const stale = [], undated = [];
+  const keep = [];
+  (scan && Array.isArray(scan.newsItems) ? scan.newsItems : []).forEach(n => {
+    const t = Date.parse(n.publishedDate || '');
+    if (isNaN(t)) { undated.push(n); return; }
+    if (t < cutoff) { stale.push({ ...n, _ageDays: Math.floor((Date.now()-t)/86400000) }); return; }
+    keep.push(n);
+  });
+  return { fresh: keep, stale, undated };
+}
+
+function fmtDate(d) {
+  const t = Date.parse(d || '');
+  if (isNaN(t)) return '';
+  const days = Math.floor((Date.now() - t) / 86400000);
+  const label = new Date(t).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+  return days <= 0 ? `${label} · today` : `${label} · ${days}d ago`;
+}
+
 // A statement that changes a rule and a statement that only changes mood look
 // identical in a headline feed, and they behave completely differently. Labelling
 // them is the whole point — sentiment-only items are flagged as not actionable
@@ -1278,7 +1349,46 @@ const MATURITY_STYLE = {
 };
 const LAYER_LABEL = { 'raw-material':'Raw', 'refined-material':'Refined', 'component':'Component', 'capital-equipment':'Equipment', 'infrastructure':'Infrastructure' };
 
+const LAYER_TONE = {
+  'raw-material':'#fb923c', 'refined-material':'#facc15', 'component':'#4ade80',
+  'capital-equipment':'#38bdf8', 'infrastructure':'#a78bfa', 'technology':'#f472b6'
+};
+
+// The names the user does NOT own. He asked for this explicitly — which minerals,
+// which emerging build-outs, which suppliers — and the holdings-shaped news feed
+// structurally cannot surface any of it.
+function renderOffPortfolio() {
+  const items = (STATE.scan && STATE.scan.offPortfolioWatchlist) || [];
+  const sec = document.getElementById('offportfolio-section');
+  const el = document.getElementById('offportfolio-list');
+  if (!sec || !el) return;
+  const owned = new Set((STATE.portfolio?.holdings||[]).map(h=>String(h.ticker||'').toUpperCase()));
+  // Anything he already holds belongs in the portfolio views, not here.
+  const list = items.filter(i => !i.ticker || !owned.has(String(i.ticker).toUpperCase()));
+  if (!list.length) { sec.style.display = 'none'; return; }
+  sec.style.display = 'block';
+  el.innerHTML = list.map(i => {
+    const tone = LAYER_TONE[i.category] || '#9ca3af';
+    return `<div style="background:#07070c;border:0.5px solid #1f2937;border-left:2px solid ${tone};border-radius:10px;padding:14px 16px;margin-bottom:9px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:5px">
+        <div style="font-size:15px;font-weight:600;color:#f9fafb">${i.name}${i.ticker?` <span style="color:${tone};font-size:13px">${i.ticker}</span>`:''}</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-shrink:0">
+          ${i.publishedDate?`<span style="font-size:11px;color:#4b5563">${fmtDate(i.publishedDate)}</span>`:''}
+          <span style="font-size:9px;color:${tone};text-transform:uppercase;letter-spacing:0.04em;border:0.5px solid ${tone}40;padding:2px 7px;border-radius:4px">${(LAYER_LABEL[i.category]||i.category||'').toString()}</span>
+        </div>
+      </div>
+      ${i.whatItIs?`<div style="font-size:13px;color:#9ca3af;line-height:1.65;margin-bottom:6px">${i.whatItIs}</div>`:''}
+      ${i.whyNow?`<div style="font-size:13px;color:#d1d5db;line-height:1.65;margin-bottom:6px"><span style="color:#4b5563;font-size:10px;text-transform:uppercase;letter-spacing:0.06em">Why now</span> ${i.whyNow}</div>`:''}
+      ${i.howToOwnIt?`<div style="font-size:12px;color:#86efac;line-height:1.6;margin-bottom:4px">${i.howToOwnIt}</div>`:''}
+      ${i.alreadyPriced?`<div style="font-size:12px;color:#6b7280;line-height:1.6">Already priced: ${i.alreadyPriced}</div>`:''}
+      ${i.risk?`<div style="font-size:12px;color:#fca5a5;line-height:1.6;margin-top:3px">Risk: ${i.risk}</div>`:''}
+      ${i.linkedTheme?`<div style="font-size:11px;color:#374151;margin-top:7px">Chain: ${i.linkedTheme}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
 function renderInputChain() {
+  renderOffPortfolio();
   const reg = STATE.trendRegister || [];
   const live = reg.filter(t => !t.invalidated);
   const el = document.getElementById('inputchain-list');
@@ -1414,6 +1524,43 @@ function renderDashboard() {
   if (!pulse) pulse = '<p style="font-size:13px;color:#374151">Run market scan to populate.</p>';
   document.getElementById('market-pulse').innerHTML = pulse;
 
+  // ── THE BRIEF ──
+  const eb = a.executiveBrief;
+  const ebEl = document.getElementById('exec-brief');
+  if (eb && (eb.headline || eb.bottomLine)) {
+    ebEl.style.display = 'block';
+    document.getElementById('brief-asof').textContent = a.timestamp ? `· ${timeAgo(a.timestamp)}` : '';
+    document.getElementById('brief-headline').textContent = eb.headline || '';
+    document.getElementById('brief-bottomline').textContent = eb.bottomLine || '';
+    const doThis = (eb.doThis||[]).filter(Boolean);
+    const watch = (eb.watchThis||[]).filter(Boolean);
+    // "Nothing to do" is a real answer and should look like a conclusion, not a gap.
+    const nothing = doThis.length === 1 && /^(no|nothing|none)\b/i.test(doThis[0].trim());
+    let html = '';
+    if (doThis.length) html += `<div style="margin-bottom:${watch.length?'16px':'0'}">
+      <div style="font-size:10px;color:${nothing?'#22c55e':'#86efac'};text-transform:uppercase;letter-spacing:0.08em;margin-bottom:7px">${nothing?'No action needed':'Do this'}</div>
+      ${doThis.map(d=>`<div style="font-size:14px;color:#d1d5db;line-height:1.65;padding-left:14px;position:relative;margin-bottom:5px"><span style="position:absolute;left:0;color:${nothing?'#22c55e':'#86efac'}">${nothing?'✓':'→'}</span>${d}</div>`).join('')}
+    </div>`;
+    if (watch.length) html += `<div>
+      <div style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:7px">Watch</div>
+      ${watch.map(w=>`<div style="font-size:14px;color:#9ca3af;line-height:1.65;padding-left:14px;position:relative;margin-bottom:5px"><span style="position:absolute;left:0;color:#4b5563">·</span>${w}</div>`).join('')}
+    </div>`;
+    document.getElementById('brief-actions').innerHTML = html;
+  } else { ebEl.style.display = 'none'; }
+
+  // ── STALENESS AUDIT ──
+  // If the scan returned anything outside the recency window, say so at the top.
+  // Silently dropping it would repeat the original failure in a quieter form.
+  const audit = auditRecency(s);
+  const swEl = document.getElementById('stale-warning');
+  if (audit.stale.length || audit.undated.length) {
+    swEl.style.display = 'block';
+    const bits = [];
+    if (audit.stale.length) bits.push(`<strong>${audit.stale.length} item${audit.stale.length>1?'s':''} dated more than ${RECENCY_DAYS} days ago</strong> (oldest ${Math.max(...audit.stale.map(x=>x._ageDays))} days)`);
+    if (audit.undated.length) bits.push(`<strong>${audit.undated.length} item${audit.undated.length>1?'s':''} with no verifiable date</strong>`);
+    swEl.innerHTML = `⚠ This scan returned ${bits.join(' and ')}. They are hidden from the News tab and excluded from the analysis. If this keeps happening the search isn't returning current results — re-run the scan.`;
+  } else { swEl.style.display = 'none'; }
+
   if (a.macroThesis) {
     document.getElementById('macro-card').style.display='block';
     document.getElementById('macro-thesis').textContent = a.macroThesis;
@@ -1524,7 +1671,9 @@ function renderDashboard() {
 
   // ── NEWS ──
   if (s.marketSummary) { const ns=document.getElementById('news-summary'); ns.style.display='block'; ns.textContent=s.marketSummary; }
-  document.getElementById('news-list').innerHTML = (s.newsItems||[]).length ? (s.newsItems||[]).map(item=>{
+  // Only in-window, dated items reach the feed — see auditRecency.
+  const freshNews = audit.fresh;
+  document.getElementById('news-list').innerHTML = freshNews.length ? freshNews.map(item=>{
     const c=ALERT_COLORS[item.severity]||ALERT_COLORS.info;
     const ic=item.impact==='bullish'?'#22c55e':item.impact==='bearish'?'#ef4444':'#f59e0b';
     return `<div class="news-card" style="background:${c.bg};border:0.5px solid ${c.border}">
@@ -1533,7 +1682,7 @@ function renderDashboard() {
         <div style="flex:1">
           <div style="display:flex;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:6px">
             <span style="font-size:11px;font-weight:700;color:${c.text};background:rgba(0,0,0,0.2);padding:2px 8px;border-radius:4px">${item.ticker}</span>
-            <div style="display:flex;gap:8px;align-items:center">${durabilityBadge(item)}<span style="font-size:11px;color:${ic};text-transform:uppercase">${item.impact}</span>${item.telegramWorthy?'<span style="font-size:10px;color:#f59e0b">📱</span>':''}</div>
+            <div style="display:flex;gap:8px;align-items:center">${item.publishedDate?`<span style="font-size:11px;color:#4b5563">${fmtDate(item.publishedDate)}</span>`:''}${durabilityBadge(item)}<span style="font-size:11px;color:${ic};text-transform:uppercase">${item.impact}</span>${item.telegramWorthy?'<span style="font-size:10px;color:#f59e0b">📱</span>':''}</div>
           </div>
           <div style="font-size:14px;font-weight:500;color:#e5e7eb;margin-bottom:4px">${item.headline}</div>
           <div style="font-size:13px;color:#9ca3af;line-height:1.6;margin-bottom:${item.recommendation?'8px':'0'}">${item.summary}</div>
