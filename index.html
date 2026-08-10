@@ -156,6 +156,13 @@
         <div id="brief-actions"></div>
       </div>
       <div id="stale-warning" style="display:none;background:#1a1208;border:0.5px solid #78350f;border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:#fcd34d;line-height:1.6;max-width:820px"></div>
+      <!-- Statements by people whose words move markets — the president/magnets ask.
+           Deliberately separate from ticker news and NOT inside the collapsed detail
+           section: this is a headline-level thing to read, not a number to check. -->
+      <div id="voices-card" style="display:none;background:#0a0a12;border:0.5px solid #134e4a;border-radius:14px;padding:20px 22px;margin-bottom:16px;max-width:820px">
+        <div class="label" style="color:#5eead4">Market-moving voices <span style="color:#4b5563;font-size:10px;text-transform:none;letter-spacing:0">· what influential people are saying about where this is headed, not reactive headlines</span></div>
+        <div id="voices-list" style="margin-top:10px"></div>
+      </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px">
         <div class="card">
           <div class="label">Portfolio health</div>
@@ -332,7 +339,7 @@ WHAT YOU ARE NOT: you are not a source of alpha and you must not perform being o
 RISK FRAME: capital preservation during drawdowns is the binding CONSTRAINT. Long-term return is the OBJECTIVE, pursued only within that constraint. When the two conflict, the constraint wins — say so explicitly rather than splitting the difference silently. Diversification is the default; concentration has to be argued for case by case, never assumed superior.
 
 RULES:
-- "HOLD everything, no action needed this month" is a valid and frequently correct conclusion. Return it whenever it is true. Never manufacture an action to look useful. An empty actionItems array is a legitimate, and sometimes the best, answer.
+- HOLD is a first-class action, not an absence of one. When a position doesn't need a trade, say so explicitly — return a HOLD entry with a real reason and a falsifier, the same as you would for a SELL. Do not simply omit a position to signal "nothing to say" — that reads as silence, not analysis, and the user has been explicit that he wants the reasoning behind holding stated, not implied. Never manufacture a BUY/SELL/TRIM just to look useful — but never go quiet on a position you actually reviewed either. Cover at minimum your largest 3-5 positions with an explicit verdict every time, even when that verdict is HOLD across the board. Leave a position out of actionItems only when it is small enough, and stable enough, that there is genuinely nothing worth saying about it.
 - Never assume, invent, or recall from training data any "current" market conditions — index levels, sector leadership, Fed policy stance, macro or geopolitical drivers, who currently holds any office, what any public figure has recently said, or today's date. Ground every market-conditions statement only in data explicitly provided to you in this request (a CURRENT MARKET CONTEXT block, live search results, or the holdings data itself), and say so plainly when no current market data is available rather than guessing.
 - Do not avoid difficult criticism. If a position or the overall allocation is bad, say it directly.
 - Always distinguish what was MEASURED from what you ESTIMATED, and label which is which. Anything handed to you as a computed fact is measured; your own inference is an estimate.`;
@@ -346,9 +353,9 @@ POLICY EXPOSURE. For each meaningful holding, identify which government-policy t
 THE EXECUTIVE BRIEF IS YOUR PRIMARY DELIVERABLE. Assume the user reads only that and nothing else. Write it as plain connected prose for a smart reader who has been away — not as fragments, bullet shorthand, arrow chains, or jargon. Lead with the conclusion, the way a good newspaper lede does: the first sentence says what matters, and detail follows. Name the one thing that matters most rather than listing five things of equal weight. If nothing needs doing, say that plainly and confidently — "nothing to do this month" is a valuable answer, not a failure. Everything else in this JSON is supporting detail the user may never open.
 
 Return ONLY valid JSON, no markdown:
-{"executiveBrief":{"headline":"<ONE sentence, under 20 words: the single most important thing about this portfolio right now>","bottomLine":"<3-5 sentences of plain prose. What changed since last time (or, on a first run, what stands out). What it means for THIS portfolio specifically. Whether anything needs doing. No lists, no jargon, no hedging.>","doThis":["<at most 3 concrete actions, each one short sentence. If nothing is needed, return exactly one entry saying so and why.>"],"watchThis":["<at most 3 things worth watching that are NOT actions — each one short sentence>"]},"score":<1-10>,"scoreAfterRebalance":<1-10>,"alerts":[{"level":"critical"|"warning"|"info","ticker":"<ticker>","title":"<short>","message":"<1-2 sentences>"}],"actionItems":[{"action":"SELL"|"BUY"|"TRIM"|"HOLD"|"ADD","ticker":"<ticker>","reason":"<concise>","urgency":"immediate"|"this-week"|"this-month","falsifier":"<what observable thing would show this call was wrong>","trimPct":<for TRIM/SELL: % of position to sell, e.g. 30>,"sizePct":<for BUY/ADD: % of total portfolio to allocate, e.g. 4>}],"sectorAssessment":{"verdict":"<1-2 sentences on what the MEASURED sector numbers mean for risk>","concerns":["<specific concentration or correlation concern>"]},"policyExposure":[{"ticker":"<ticker>","channels":["tariffs"|"export-controls"|"rate-path"|"antitrust"|"federal-procurement"|"drug-pricing"|"energy-policy"|"labor"],"mechanism":"<one sentence: how a change transmits to earnings>","direction":"helped-by-loosening"|"hurt-by-tightening"|"two-sided"}],"stressTests":[{"scenario":"<n>","currentImpact":"<e.g. -30% to -38%>","rebalancedImpact":"<e.g. -20%>"}],"strengths":["<s1>","<s2>","<s3>"],"weaknesses":["<w1>","<w2>","<w3>"],"topPositionAnalysis":[{"ticker":"<t>","verdict":"strong-hold"|"hold"|"trim"|"sell"|"add","note":"<one sentence>"}],"macroThesis":"<2-3 sentence market read for this portfolio>","telegramWorthy":<true|false>}
+{"executiveBrief":{"headline":"<ONE sentence, under 20 words: the single most important thing about this portfolio right now>","bottomLine":"<3-5 sentences of plain prose. What changed since last time (or, on a first run, what stands out). What it means for THIS portfolio specifically. Whether anything needs doing. No lists, no jargon, no hedging.>","doThis":["<at most 3 concrete actions, each one short sentence. A recommendation to hold IS an action — phrase it as 'Hold NVDA, MSFT and VOO — thesis intact, no rebalance needed' rather than 'nothing to do.' Only use a single blanket no-comment entry when you truly have no verdict to offer on anything in the portfolio, which should be rare.>"],"watchThis":["<at most 3 things worth watching that are NOT actions — each one short sentence>"]},"score":<1-10>,"scoreAfterRebalance":<1-10>,"alerts":[{"level":"critical"|"warning"|"info","ticker":"<ticker>","title":"<short>","message":"<1-2 sentences>"}],"actionItems":[{"action":"SELL"|"BUY"|"TRIM"|"HOLD"|"ADD","ticker":"<ticker>","reason":"<concise>","urgency":"immediate"|"this-week"|"this-month","falsifier":"<what observable thing would show this call was wrong>","trimPct":<for TRIM/SELL: % of position to sell, e.g. 30>,"sizePct":<for BUY/ADD: % of total portfolio to allocate, e.g. 4>}],"sectorAssessment":{"verdict":"<1-2 sentences on what the MEASURED sector numbers mean for risk>","concerns":["<specific concentration or correlation concern>"]},"policyExposure":[{"ticker":"<ticker>","channels":["tariffs"|"export-controls"|"rate-path"|"antitrust"|"federal-procurement"|"drug-pricing"|"energy-policy"|"labor"],"mechanism":"<one sentence: how a change transmits to earnings>","direction":"helped-by-loosening"|"hurt-by-tightening"|"two-sided"}],"stressTests":[{"scenario":"<n>","currentImpact":"<e.g. -30% to -38%>","rebalancedImpact":"<e.g. -20%>"}],"strengths":["<s1>","<s2>","<s3>"],"weaknesses":["<w1>","<w2>","<w3>"],"topPositionAnalysis":[{"ticker":"<t>","verdict":"strong-hold"|"hold"|"trim"|"sell"|"add","note":"<one sentence>"}],"macroThesis":"<2-3 sentence market read for this portfolio>","telegramWorthy":<true|false>}
 
-actionItems MAY be an empty array. If the portfolio needs nothing this month, return [] and say why in sectorAssessment.verdict. Set telegramWorthy true ONLY for something that genuinely cannot wait until he next opens the app — a real, dated, position-specific risk. Routine rebalancing observations are not telegramWorthy.`;
+Prefer explicit HOLD entries with reasoning over leaving positions out. actionItems should normally be non-empty even in a quiet month — that's what HOLD verdicts are for. Reserve a genuinely empty array for the rare case where you have no comment on any position at all. Set telegramWorthy true ONLY for something that genuinely cannot wait until he next opens the app — a real, dated, position-specific risk. Routine rebalancing observations, and HOLD verdicts, are not telegramWorthy.`;
 
 const SCAN_PROMPT = ANALYST_PERSONA + `\n\nSearch the web for recent news and market data. Every factual claim you make must trace to something you actually found in search, with a date. If you cannot source it, do not assert it.
 
@@ -360,6 +367,12 @@ When a public figure's statement shows up in your search (head of state, central
 - "sentiment-only" — praise, criticism, prediction, pressure, or commentary that changes no rule. It moves price without changing cash flows and historically tends to mean-revert within days to weeks. This is usually NOISE.
 
 Say which one it is in the 'durability' field and be honest. A statement praising or attacking one company is almost always sentiment-only, however large the price move was. Do NOT recommend a portfolio action off a sentiment-only statement — for those, set recommendation to explicitly say no action is warranted and why. The user reviews this app about once a month; by the time he reads a sentiment-only move it is over, and acting on it late is the single most expensive mistake this tool could cause.
+
+Go actively looking for a specific kind of statement the user wants surfaced by name: things like a head of state saying "invest in magnets," a Fed official signalling "here's where I see rates heading," or a megacap CEO saying "in three years I expect this to be the industry." These are DIFFERENT from ordinary reactive news — they are a person stating intent or a forecast about where markets or an industry are headed, independent of whether a specific event just happened. Put every one you find in 'marketMovingVoices', separate from newsItems, using a third durability value alongside the two above:
+
+- "forward-looking" — a stated intention, plan, or prediction about future policy or industry direction. Not yet a completed action, so it carries less certainty than "policy-change" — but it is not noise either, because these statements often precede the policy that follows them. Track it; don't treat it as confirmed.
+
+Search specifically for statements from: heads of state and senior administration officials, the Fed chair and FOMC members, financial and industry regulators, and the CEOs of companies large enough that their stated plans move a sector (chip makers, automakers, hyperscalers, energy majors). A statement only qualifies if you can quote or closely paraphrase what was actually said, with a date and a named speaker — do not paraphrase into vagueness, and do not invent a statement to fill this section. Returning zero is correct if your search finds nothing that qualifies.
 
 ═══ PART 2: INPUT CHAINS — WHAT THE BUILD-OUT CONSUMES ═══
 
@@ -384,7 +397,7 @@ The user message contains an EXISTING TREND REGISTER. These are input-chain them
 - Maturity should move over time: early → accelerating → consensus → fading. Moving a theme backwards needs a reason.
 
 Return ONLY valid JSON:
-{"marketSummary":"<2-3 sentences>","newsItems":[{"ticker":"<ticker or MARKET>","publishedDate":"<YYYY-MM-DD from the source page — required>","headline":"<actual headline>","summary":"<1-2 sentences>","impact":"bullish"|"bearish"|"neutral","severity":"critical"|"warning"|"info","durability":"policy-change"|"sentiment-only"|"company-fundamental"|"macro-data","speaker":"<name/role if this is a statement by a person, else empty>","recommendation":"<specific action, or an explicit statement that no action is warranted and why>","telegramWorthy":<true|false>}],"offPortfolioWatchlist":[{"name":"<company, material, or technology>","ticker":"<ticker if public, else empty>","category":"raw-material"|"refined-material"|"component"|"capital-equipment"|"infrastructure"|"technology","linkedTheme":"<matching inputChainThemes theme name, or empty>","whatItIs":"<one plain sentence — assume the user has never heard of it>","whyNow":"<the dated, observable reason it matters right now>","publishedDate":"<YYYY-MM-DD of the evidence>","howToOwnIt":"<public tickers with purity, or 'no clean public exposure' — say so when that's the honest answer>","alreadyPriced":"<what the market already believes>","risk":"<the main way this disappoints>"}],"sectorTrends":[{"sector":"<n>","trend":"up"|"down"|"sideways","note":"<one sentence>","action":"rotate-in"|"rotate-out"|"hold"}],"inputChainThemes":[{"theme":"<short stable name for this build-out, reused verbatim across runs>","demandDrivers":["<observable, dated evidence of what is being built or scaled>"],"inputChain":[{"layer":"raw-material"|"refined-material"|"component"|"capital-equipment"|"infrastructure","input":"<the specific input>","whyRequired":"<the physical or technical reason it is needed>","chokepoint":<true|false>,"chokepointReason":"<what makes it hard to substitute, or empty if commoditised>"}],"publicWaysToOwnIt":[{"ticker":"<ticker>","layer":"<which layer above>","purity":"pure-play"|"significant"|"incidental","note":"<one sentence>"}],"userExposureToday":["<tickers the user ALREADY owns that sit anywhere on this chain — check the holdings list>"],"maturity":"early"|"accelerating"|"consensus"|"fading","consensusView":"<what the market already believes and has already priced>","downsideCase":"<what breaks this, and what happens to the suppliers when it does>","falsifier":"<the specific observable event that would show this theme is over or wrong>","invalidated":<true|false>,"sourceEvidence":"<the dated news or data from your search supporting this — no training-data recall>"}],"buyOpportunities":[{"ticker":"<ticker>","name":"<full name>","thesis":"<2-3 sentence buy thesis>","suggestedAllocation":"<% of portfolio>","urgency":"immediate"|"this-week"|"this-month","category":"<e.g. AI power, energy hedge>","linkedTheme":"<matching inputChainThemes theme name, or empty>","telegramWorthy":<true|false>}],"rotationAlerts":[{"from":"<ticker>","to":"<ticker>","reason":"<why now>","telegramWorthy":<true|false>}],"topRisk":"<biggest risk>","topOpportunity":"<best opportunity>"}
+{"marketSummary":"<2-3 sentences>","marketMovingVoices":[{"speaker":"<name and title/role — required>","statement":"<what they actually said, quoted or closely paraphrased>","dateSaid":"<YYYY-MM-DD — required>","durability":"policy-change"|"sentiment-only"|"forward-looking","horizon":"immediate"|"months"|"years","implication":"<1-2 plain sentences: what this means for markets, or for this portfolio specifically>","linkedTickers":["<tickers this could plausibly affect, empty array if it's broad/macro>"],"watchFor":"<the observable next event that would confirm or kill this as real signal>"}],"newsItems":[{"ticker":"<ticker or MARKET>","publishedDate":"<YYYY-MM-DD from the source page — required>","headline":"<actual headline>","summary":"<1-2 sentences>","impact":"bullish"|"bearish"|"neutral","severity":"critical"|"warning"|"info","durability":"policy-change"|"sentiment-only"|"company-fundamental"|"macro-data","speaker":"<name/role if this is a statement by a person, else empty>","recommendation":"<specific action, or an explicit statement that no action is warranted and why>","telegramWorthy":<true|false>}],"offPortfolioWatchlist":[{"name":"<company, material, or technology>","ticker":"<ticker if public, else empty>","category":"raw-material"|"refined-material"|"component"|"capital-equipment"|"infrastructure"|"technology","linkedTheme":"<matching inputChainThemes theme name, or empty>","whatItIs":"<one plain sentence — assume the user has never heard of it>","whyNow":"<the dated, observable reason it matters right now>","publishedDate":"<YYYY-MM-DD of the evidence>","howToOwnIt":"<public tickers with purity, or 'no clean public exposure' — say so when that's the honest answer>","alreadyPriced":"<what the market already believes>","risk":"<the main way this disappoints>"}],"sectorTrends":[{"sector":"<n>","trend":"up"|"down"|"sideways","note":"<one sentence>","action":"rotate-in"|"rotate-out"|"hold"}],"inputChainThemes":[{"theme":"<short stable name for this build-out, reused verbatim across runs>","demandDrivers":["<observable, dated evidence of what is being built or scaled>"],"inputChain":[{"layer":"raw-material"|"refined-material"|"component"|"capital-equipment"|"infrastructure","input":"<the specific input>","whyRequired":"<the physical or technical reason it is needed>","chokepoint":<true|false>,"chokepointReason":"<what makes it hard to substitute, or empty if commoditised>"}],"publicWaysToOwnIt":[{"ticker":"<ticker>","layer":"<which layer above>","purity":"pure-play"|"significant"|"incidental","note":"<one sentence>"}],"userExposureToday":["<tickers the user ALREADY owns that sit anywhere on this chain — check the holdings list>"],"maturity":"early"|"accelerating"|"consensus"|"fading","consensusView":"<what the market already believes and has already priced>","downsideCase":"<what breaks this, and what happens to the suppliers when it does>","falsifier":"<the specific observable event that would show this theme is over or wrong>","invalidated":<true|false>,"sourceEvidence":"<the dated news or data from your search supporting this — no training-data recall>"}],"buyOpportunities":[{"ticker":"<ticker>","name":"<full name>","thesis":"<2-3 sentence buy thesis>","suggestedAllocation":"<% of portfolio>","urgency":"immediate"|"this-week"|"this-month","category":"<e.g. AI power, energy hedge>","linkedTheme":"<matching inputChainThemes theme name, or empty>","telegramWorthy":<true|false>}],"rotationAlerts":[{"from":"<ticker>","to":"<ticker>","reason":"<why now>","telegramWorthy":<true|false>}],"topRisk":"<biggest risk>","topOpportunity":"<best opportunity>"}
 
 Set telegramWorthy true ONLY for a dated, position-specific, policy-change-grade development. Never for sentiment-only statements, and never for a theme update.`;
 
@@ -1013,6 +1026,11 @@ function getMarketContextBlock() {
     parts.push('\nMarket news found by the scan (durability classification included — sentiment-only items move price without changing cash flows and should not drive action):');
     news.forEach(n => parts.push(`  · [${n.ticker||'MARKET'}] (${n.durability||'unclassified'}${n.speaker?`, ${n.speaker}`:''}) ${n.headline} — ${n.summary||''}`));
   }
+  const voices = (s.marketMovingVoices||[]).slice(0,8);
+  if (voices.length) {
+    parts.push('\nStatements by influential people found by the scan (forward-looking = a stated plan or prediction, not yet a completed policy — weigh accordingly):');
+    voices.forEach(v => parts.push(`  · ${v.speaker||'unknown speaker'} (${v.durability||'unclassified'}, ${v.dateSaid||'undated'}): "${v.statement||''}" — ${v.implication||''}`));
+  }
   const trends = (s.sectorTrends||[]).slice(0,8);
   if (trends.length) {
     parts.push('\nSector trends from the scan:');
@@ -1311,6 +1329,23 @@ function auditRecency(scan) {
   return { fresh: keep, stale, undated };
 }
 
+// Voices get a lighter touch than reactive news: a 3-year prediction stated two
+// months ago is still exactly as relevant today, so only "sentiment-only" (a hot
+// take that mean-reverts) is auto-expired by age. Forward-looking guidance and
+// policy-change statements are kept regardless of age — the date is shown either
+// way — but an undated voice is unverifiable and dropped like any undated item.
+function auditVoices(scan) {
+  const cutoff = Date.now() - RECENCY_DAYS * 86400000;
+  const stale = [], undated = [], keep = [];
+  (scan && Array.isArray(scan.marketMovingVoices) ? scan.marketMovingVoices : []).forEach(v => {
+    const t = Date.parse(v.dateSaid || '');
+    if (isNaN(t)) { undated.push(v); return; }
+    if (v.durability === 'sentiment-only' && t < cutoff) { stale.push({ ...v, _ageDays: Math.floor((Date.now()-t)/86400000) }); return; }
+    keep.push(v);
+  });
+  return { fresh: keep, stale, undated };
+}
+
 function fmtDate(d) {
   const t = Date.parse(d || '');
   if (isNaN(t)) return '';
@@ -1327,7 +1362,8 @@ const DURABILITY_STYLE = {
   'policy-change':      { label:'POLICY CHANGE', color:'#fca5a5', bg:'#1a0808', border:'#7f1d1d', title:'Changes actual rules, so it changes cash flows. This kind of repricing tends to stick.' },
   'sentiment-only':     { label:'SENTIMENT ONLY', color:'#94a3b8', bg:'#0a0a12', border:'#374151', title:'Moves price without changing any rule or cash flow. Historically tends to mean-revert within days to weeks. Not a basis for action — especially not weeks later.' },
   'company-fundamental':{ label:'FUNDAMENTAL',    color:'#93c5fd', bg:'#08101a', border:'#1e3a5f', title:'A change in the business itself — earnings, guidance, orders, management.' },
-  'macro-data':         { label:'MACRO DATA',     color:'#c4b5fd', bg:'#0f0a1a', border:'#4c1d95', title:'A released economic data point rather than an opinion about one.' }
+  'macro-data':         { label:'MACRO DATA',     color:'#c4b5fd', bg:'#0f0a1a', border:'#4c1d95', title:'A released economic data point rather than an opinion about one.' },
+  'forward-looking':    { label:'FORWARD-LOOKING', color:'#5eead4', bg:'#042f2e', border:'#134e4a', title:'A stated intention or prediction about future policy or industry direction — not yet a completed action. Often precedes real policy, but track it rather than act on it alone.' }
 };
 function durabilityBadge(item) {
   const d = DURABILITY_STYLE[item && item.durability];
@@ -1552,14 +1588,41 @@ function renderDashboard() {
   // If the scan returned anything outside the recency window, say so at the top.
   // Silently dropping it would repeat the original failure in a quieter form.
   const audit = auditRecency(s);
+  const voiceAudit = auditVoices(s);
   const swEl = document.getElementById('stale-warning');
-  if (audit.stale.length || audit.undated.length) {
+  const staleCount = audit.stale.length + voiceAudit.stale.length;
+  const undatedCount = audit.undated.length + voiceAudit.undated.length;
+  if (staleCount || undatedCount) {
     swEl.style.display = 'block';
     const bits = [];
-    if (audit.stale.length) bits.push(`<strong>${audit.stale.length} item${audit.stale.length>1?'s':''} dated more than ${RECENCY_DAYS} days ago</strong> (oldest ${Math.max(...audit.stale.map(x=>x._ageDays))} days)`);
-    if (audit.undated.length) bits.push(`<strong>${audit.undated.length} item${audit.undated.length>1?'s':''} with no verifiable date</strong>`);
-    swEl.innerHTML = `⚠ This scan returned ${bits.join(' and ')}. They are hidden from the News tab and excluded from the analysis. If this keeps happening the search isn't returning current results — re-run the scan.`;
+    if (staleCount) {
+      const oldest = Math.max(...[...audit.stale, ...voiceAudit.stale].map(x=>x._ageDays));
+      bits.push(`<strong>${staleCount} item${staleCount>1?'s':''} dated more than ${RECENCY_DAYS} days ago</strong> (oldest ${oldest} days)`);
+    }
+    if (undatedCount) bits.push(`<strong>${undatedCount} item${undatedCount>1?'s':''} with no verifiable date</strong>`);
+    swEl.innerHTML = `⚠ This scan returned ${bits.join(' and ')}. They are hidden from the News tab, the voices card, and excluded from the analysis. If this keeps happening the search isn't returning current results — re-run the scan.`;
   } else { swEl.style.display = 'none'; }
+
+  // ── MARKET-MOVING VOICES ──
+  const vcEl = document.getElementById('voices-card');
+  if (voiceAudit.fresh.length) {
+    vcEl.style.display = 'block';
+    document.getElementById('voices-list').innerHTML = voiceAudit.fresh.map(v => `
+      <div style="background:#07070c;border:0.5px solid #1f2937;border-radius:10px;padding:14px 16px;margin-bottom:9px">
+        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:6px;align-items:flex-start">
+          <div style="font-size:14px;font-weight:600;color:#f9fafb">${v.speaker||'Unknown speaker'}</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-shrink:0">
+            ${v.dateSaid?`<span style="font-size:11px;color:#4b5563">${fmtDate(v.dateSaid)}</span>`:''}
+            ${durabilityBadge(v)}
+            ${v.horizon?`<span style="font-size:9px;color:#9ca3af;text-transform:uppercase;border:0.5px solid #374151;padding:2px 6px;border-radius:4px">${v.horizon}</span>`:''}
+          </div>
+        </div>
+        <div style="font-size:14px;color:#d1d5db;font-style:italic;line-height:1.6;margin-bottom:8px">"${v.statement||''}"</div>
+        ${v.implication?`<div style="font-size:13px;color:#9ca3af;line-height:1.6;margin-bottom:4px"><span style="color:#4b5563;font-size:10px;text-transform:uppercase;letter-spacing:0.06em">What it means</span> ${v.implication}</div>`:''}
+        ${(v.linkedTickers||[]).length?`<div style="font-size:11px;color:#6b7280;margin-top:4px">Affects: ${v.linkedTickers.join(', ')}</div>`:''}
+        ${v.watchFor?`<div style="font-size:12px;color:#6b7280;line-height:1.6;border-left:2px solid #374151;padding-left:9px;margin-top:7px">Confirmed or killed by: ${v.watchFor}</div>`:''}
+      </div>`).join('');
+  } else { vcEl.style.display = 'none'; }
 
   if (a.macroThesis) {
     document.getElementById('macro-card').style.display='block';
