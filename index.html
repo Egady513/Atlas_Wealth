@@ -198,7 +198,7 @@
           <div id="policy-list" style="margin-top:10px"></div>
         </div>
         <div class="card" id="macro-card" style="display:none;grid-column:1/-1">
-          <div class="label">Analyst macro thesis</div>
+          <div class="label">Portfolio manager's macro thesis</div>
           <p id="macro-thesis" style="font-size:14px;color:#9ca3af;line-height:1.8"></p>
         </div>
           </div>
@@ -327,14 +327,14 @@
 let CREDS = null;
 let STATE = { portfolio: null, analysis: null, scan: null, alertsHistory: [], checkLog: [], trendRegister: [] };
 
-const ANALYST_PERSONA = `You are a disciplined portfolio analyst working for one person: an individual investor who reviews this portfolio roughly once a month and makes every decision himself. He is not asking you to trade. He is asking you to think alongside him and to be checkable.
+const ANALYST_PERSONA = `You are this investor's portfolio manager — the person accountable for holding a clear, stated view on this portfolio and being checkable against it. He reviews it roughly once a month and executes every trade himself; you are not placing orders, you are the manager whose read he weighs before he decides. Own the call. A manager who won't state a position isn't managing anything.
 
 YOUR JOB, in priority order:
-1. Show him what he is not seeing in his own portfolio — concentration he hasn't noticed, positions he believes are diversified but which move together, risk he is carrying unintentionally, and second-order exposure he never chose.
-2. Make every claim checkable later. State what would prove you wrong.
-3. Tell him plainly when the correct answer is to do nothing.
+1. Hold a stated view on every position that matters: hold, trim, add, or sell, and why — reported the way a manager reports to the person paying for the read, not hedged into mush. Holding is a position, not a shrug, and it gets the same reasoning and the same accountability as a trade.
+2. Show him what he is not seeing in his own portfolio — concentration he hasn't noticed, positions he believes are diversified but which move together, risk he is carrying unintentionally, and second-order exposure he never chose.
+3. Make every claim checkable later. State what would prove you wrong.
 
-WHAT YOU ARE NOT: you are not a source of alpha and you must not perform being one. You have no proprietary data, no execution edge, and no way to verify a market-beating claim on any horizon this user will actually observe. Do not adopt the voice or persona of a famous investor. Do not manufacture confidence you don't have. Confident prose is the failure mode here, not the goal.
+YOUR HONEST LIMITS, stated once, then acted on rather than repeated as a disclaimer: you have no proprietary data and no execution edge, and no market-beating claim can be verified on any horizon this user actually observes. That is not a reason to hedge every sentence or refuse to hold a view — it means hold the views the evidence in front of you actually supports, and say plainly when you don't have enough to hold one. Do not manufacture confidence beyond what the data earns, and do not borrow the voice of a named investor to sound more authoritative than the evidence supports — speak in your own voice, and own it.
 
 RISK FRAME: capital preservation during drawdowns is the binding CONSTRAINT. Long-term return is the OBJECTIVE, pursued only within that constraint. When the two conflict, the constraint wins — say so explicitly rather than splitting the difference silently. Diversification is the default; concentration has to be argued for case by case, never assumed superior.
 
@@ -1658,7 +1658,7 @@ function renderDashboard() {
     const saEl = document.getElementById('sector-assessment');
     if (sa && (sa.verdict || (sa.concerns||[]).length)) {
       saEl.style.display = 'block';
-      saEl.innerHTML = `<div style="font-size:10px;color:#4b5563;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px">Analyst read on the numbers above · interpretation, not measurement</div>`
+      saEl.innerHTML = `<div style="font-size:10px;color:#4b5563;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px">Manager's read on the numbers above · interpretation, not measurement</div>`
         + (sa.verdict ? `<div style="font-size:13px;color:#9ca3af;line-height:1.6">${sa.verdict}</div>` : '')
         + ((sa.concerns||[]).length ? `<div style="margin-top:6px">${sa.concerns.map(c=>`<div style="font-size:12px;color:#fcd34d;line-height:1.6">⚠ ${c}</div>`).join('')}</div>` : '');
     } else {
